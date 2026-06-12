@@ -12,7 +12,7 @@ from src.roboflow_workflow import (
     parse_workflow_result,
     run_workflow,
 )
-from src.severity import estimate_severity
+from src.severity import estimate_severity, mm_per_pixel_from_reference
 
 
 st.set_page_config(page_title="Construction Defect Detection", layout="wide")
@@ -20,6 +20,22 @@ st.title("Construction Defect Detection using YOLO")
 
 mode = st.sidebar.radio("Inference Mode", ["Roboflow Workflow", "Local YOLO Weights"])
 confidence = st.sidebar.slider("Confidence", 0.05, 0.95, 0.25, 0.05)
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("Scale reference (optional)")
+st.sidebar.caption(
+    "Provide a known object in the photo to grade cracks by real width "
+    "(ACI 224R / IS 456). Leave blank to grade by surface area only."
+)
+use_scale = st.sidebar.checkbox("Use a scale reference", value=False)
+mm_per_pixel: float | None = None
+if use_scale:
+    ref_mm = st.sidebar.number_input("Reference real size (mm)", min_value=0.0, value=100.0, step=10.0)
+    ref_px = st.sidebar.number_input("Reference size in image (px)", min_value=0.0, value=250.0, step=10.0)
+    if ref_mm > 0 and ref_px > 0:
+        mm_per_pixel = mm_per_pixel_from_reference(ref_mm, ref_px)
+        st.sidebar.caption(f"Scale: {mm_per_pixel:.4f} mm/px")
+
 uploaded_file = st.file_uploader("Upload a concrete surface image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is None:
@@ -61,6 +77,7 @@ if mode == "Roboflow Workflow":
                         box_height=float(item.get("height", 0.0)),
                         image_width=source_width,
                         image_height=source_height,
+                        mm_per_pixel=mm_per_pixel,
                     )
                     rows.append(
                         {
@@ -68,7 +85,10 @@ if mode == "Roboflow Workflow":
                             "Confidence": round(float(item.get("confidence", 0.0)), 3),
                             "Severity": severity.level,
                             "Affected Area %": round(severity.area_ratio * 100, 2),
+                            "Basis": severity.measured,
+                            "Standard": severity.standard,
                             "Remark": severity.reason,
+                            "Recommended Action": severity.recommended_action,
                         }
                     )
                 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
@@ -106,6 +126,7 @@ for box in result.boxes:
         box_height=y2 - y1,
         image_width=image_width,
         image_height=image_height,
+        mm_per_pixel=mm_per_pixel,
     )
     rows.append(
         {
@@ -113,7 +134,10 @@ for box in result.boxes:
             "Confidence": round(float(box.conf[0].item()), 3),
             "Severity": severity.level,
             "Affected Area %": round(severity.area_ratio * 100, 2),
+            "Basis": severity.measured,
+            "Standard": severity.standard,
             "Remark": severity.reason,
+            "Recommended Action": severity.recommended_action,
         }
     )
 
