@@ -1,0 +1,127 @@
+from __future__ import annotations
+
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+
+import pandas as pd
+import streamlit as st
+from PIL import Image
+
+from src.roboflow_workflow import (
+    RoboflowWorkflowError,
+    parse_workflow_result,
+    run_workflow,
+)
+from src.severity import estimate_severity
+
+
+st.set_page_config(page_title="Construction Defect Detection", layout="wide")
+st.title("Construction Defect Detection using YOLO")
+
+mode = st.sidebar.radio("Inference Mode", ["Roboflow Workflow", "Local YOLO Weights"])
+confidence = st.sidebar.slider("Confidence", 0.05, 0.95, 0.25, 0.05)
+uploaded_file = st.file_uploader("Upload a concrete surface image", type=["jpg", "jpeg", "png"])
+
+if uploaded_file is None:
+    st.info("Upload an image to run defect detection.")
+    st.stop()
+
+with NamedTemporaryFile(delete=False, suffix=Path(uploaded_file.name).suffix) as temporary_file:
+    temporary_file.write(uploaded_file.getbuffer())
+    temporary_path = temporary_file.name
+
+image = Image.open(temporary_path).convert("RGB")
+image_width, image_height = image.size
+
+if mode == "Roboflow Workflow":
+    st.image(image, caption="Input Image", use_container_width=True)
+    if st.button("Run Roboflow Detection", type="primary"):
+        try:
+            raw = run_workflow(temporary_path)
+            output_dir = Path("outputs/workflow")
+            parsed = parse_workflow_result(raw[0], output_dir) if raw else None
+            st.success("Roboflow workflow completed.")
+
+            if parsed and "output_image" in parsed.saved_images:
+                st.image(
+                    str(parsed.saved_images["output_image"]),
+                    caption="Workflow Visualization",
+                    use_container_width=True,
+                )
+
+            if parsed and parsed.predictions:
+                source_width = parsed.image_width or image_width
+                source_height = parsed.image_height or image_height
+                rows = []
+                for item in parsed.predictions:
+                    defect_class = str(item.get("class", ""))
+                    severity = estimate_severity(
+                        defect_class=defect_class or "defect",
+                        box_width=float(item.get("width", 0.0)),
+                        box_height=float(item.get("height", 0.0)),
+                        image_width=source_width,
+                        image_height=source_height,
+                    )
+                    rows.append(
+                        {
+                            "Defect": defect_class.replace("_", " ").title(),
+                            "Confidence": round(float(item.get("confidence", 0.0)), 3),
+                            "Severity": severity.level,
+                            "Affected Area %": round(severity.area_ratio * 100, 2),
+                            "Remark": severity.reason,
+                        }
+                    )
+                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            else:
+                st.warning("No defects returned by the workflow.")
+        except RoboflowWorkflowError as error:
+            st.error(str(error))
+            st.info(
+                "The workflow's classification block points to the sample model `car-colors-1smyc/5`. "
+                "Open the workflow in Roboflow and either remove the classification step or point it at a "
+                "real construction-defect classifier; the detection model `training-dataset-1gvqr/2` works on its own."
+            )
+    st.stop()
+
+model_path = st.sidebar.text_input("Model weights", "models/best.pt")
+if not Path(model_path).exists():
+    st.error("Model weights were not found. Train the model first or place best.pt in the models folder.")
+    st.stop()
+
+from ultralytics import YOLO
+
+model = YOLO(model_path)
+results = model.predict(source=temporary_path, conf=confidence)
+result = results[0]
+annotated_image = result.plot()[:, :, ::-1]
+
+rows: list[dict] = []
+for box in result.boxes:
+    x1, y1, x2, y2 = box.xyxy[0].tolist()
+    class_id = int(box.cls[0].item())
+    defect_class = result.names[class_id]
+    severity = estimate_severity(
+        defect_class=defect_class,
+        box_width=x2 - x1,
+        box_height=y2 - y1,
+        image_width=image_width,
+        image_height=image_height,
+    )
+    rows.append(
+        {
+            "Defect": defect_class.replace("_", " ").title(),
+            "Confidence": round(float(box.conf[0].item()), 3),
+            "Severity": severity.level,
+            "Affected Area %": round(severity.area_ratio * 100, 2),
+            "Remark": severity.reason,
+        }
+    )
+
+left, right = st.columns([1.2, 1])
+with left:
+    st.image(annotated_image, caption="Detection Output", use_container_width=True)
+with right:
+    if rows:
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    else:
+        st.warning("No defect detected at the selected confidence threshold.")

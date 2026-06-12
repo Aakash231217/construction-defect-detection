@@ -1,0 +1,7 @@
+base_model: yolo11n.pt
+image_size: 640
+epochs: 50
+batch_size: 8
+project: runs/train
+experiment_name: construction_defect_yolo
+confidence_threshold: 0.25

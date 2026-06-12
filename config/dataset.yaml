@@ -1,0 +1,12 @@
+# Replace these paths after downloading/exporting a YOLO-format dataset.
+# Roboflow export usually creates train/valid/test folders containing images and labels.
+path: ./data/concrete-defects
+train: train/images
+val: valid/images
+test: test/images
+
+names:
+  0: crack
+  1: spalling
+  2: honeycombing
+  3: exposed_rebar
