@@ -89,6 +89,9 @@ if mode == "Roboflow Workflow":
                             "Standard": severity.standard,
                             "Remark": severity.reason,
                             "Recommended Action": severity.recommended_action,
+                            "Remedial Measure": severity.remedial_measure,
+                            "Repair Cost Estimate": severity.repair_cost_estimate,
+                            "Repair Time Estimate": severity.repair_time_estimate,
                         }
                     )
                 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
@@ -138,6 +141,9 @@ for box in result.boxes:
             "Standard": severity.standard,
             "Remark": severity.reason,
             "Recommended Action": severity.recommended_action,
+            "Remedial Measure": severity.remedial_measure,
+            "Repair Cost Estimate": severity.repair_cost_estimate,
+            "Repair Time Estimate": severity.repair_time_estimate,
         }
     )
 

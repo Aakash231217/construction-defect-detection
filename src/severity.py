@@ -19,6 +19,12 @@ When a scale reference (mm-per-pixel) is supplied, grading uses real-world
 millimetre measurements, which is the professional path. Without a scale the
 module falls back to a surface-area ratio and clearly flags the result as an
 approximation that needs manual measurement to confirm.
+
+The returned result also includes indicative remedial measures, repair-cost
+bands and repair-time bands for planning/reporting. These are budget-level
+estimates only; final quantities and rates must be confirmed from site
+measurements, access constraints, local labour/material rates and a structural
+engineer's repair specification.
 """
 
 from __future__ import annotations
@@ -47,6 +53,13 @@ class Severity(IntEnum):
         }[self]
 
 
+@dataclass(frozen=True)
+class RemediationEstimate:
+    remedial_measure: str
+    repair_cost_estimate: str
+    repair_time_estimate: str
+
+
 # Recommended action per condition state (asset-management style guidance).
 RECOMMENDED_ACTION: dict[Severity, str] = {
     Severity.NEGLIGIBLE: "Record only; no remedial action required.",
@@ -54,6 +67,117 @@ RECOMMENDED_ACTION: dict[Severity, str] = {
     Severity.MODERATE: "Plan repair; investigate cause and seal against moisture ingress.",
     Severity.SEVERE: "Engage a structural engineer; protect/limit loads and schedule remediation.",
     Severity.CRITICAL: "Immediate structural engineering assessment; consider shoring or closure.",
+}
+
+
+GENERIC_REMEDIATION: dict[Severity, RemediationEstimate] = {
+    Severity.NEGLIGIBLE: RemediationEstimate(
+        "Record condition and continue normal inspection cycle.",
+        "INR 0-100 per inspection item",
+        "No repair time",
+    ),
+    Severity.MINOR: RemediationEstimate(
+        "Clean surface and apply local cosmetic/protective repair as needed.",
+        "INR 300-1,000 per small repair area",
+        "Same day",
+    ),
+    Severity.MODERATE: RemediationEstimate(
+        "Plan targeted repair after confirming cause and extent on site.",
+        "INR 1,000-3,500 per repair area",
+        "1-3 days",
+    ),
+    Severity.SEVERE: RemediationEstimate(
+        "Engineer-led repair with load/access controls and durability treatment.",
+        "INR 3,500-8,000+ per repair area",
+        "3-7 days",
+    ),
+    Severity.CRITICAL: RemediationEstimate(
+        "Immediate engineering assessment; provide temporary support before permanent repair.",
+        "Engineer estimate required; often INR 8,000+ per repair area",
+        "1-3 weeks or more",
+    ),
+}
+
+
+REMEDIATION_GUIDE: dict[str, dict[Severity, RemediationEstimate]] = {
+    "crack": {
+        Severity.MINOR: RemediationEstimate(
+            "Seal hairline crack with acrylic/PU sealant after cleaning.",
+            "INR 150-400 per running metre",
+            "Same day",
+        ),
+        Severity.MODERATE: RemediationEstimate(
+            "Route-and-seal or epoxy inject the crack; control moisture ingress.",
+            "INR 500-1,500 per running metre",
+            "1-2 days",
+        ),
+        Severity.SEVERE: RemediationEstimate(
+            "Structural epoxy injection or crack stitching with cause investigation.",
+            "INR 1,500-4,000 per running metre",
+            "2-5 days",
+        ),
+        Severity.CRITICAL: RemediationEstimate(
+            "Provide temporary support if required, then engineer-designed strengthening/repair.",
+            "Engineer estimate required; often INR 5,000+ per running metre",
+            "1-2 weeks or more",
+        ),
+    },
+    "spalling": {
+        Severity.MINOR: RemediationEstimate(
+            "Remove loose concrete and patch with polymer-modified repair mortar.",
+            "INR 800-1,500 per sq m",
+            "Same day to 1 day",
+        ),
+        Severity.MODERATE: RemediationEstimate(
+            "Break out unsound concrete, clean/passivate steel and reinstate cover.",
+            "INR 1,500-3,500 per sq m",
+            "1-3 days",
+        ),
+        Severity.SEVERE: RemediationEstimate(
+            "Deep patch repair with steel treatment/replacement and micro-concrete/shotcrete.",
+            "INR 3,500-8,000 per sq m",
+            "3-7 days",
+        ),
+        Severity.CRITICAL: RemediationEstimate(
+            "Engineer-designed section restoration, jacketing or strengthening after making safe.",
+            "Engineer estimate required; often INR 8,000+ per sq m",
+            "1-3 weeks or more",
+        ),
+    },
+    "honeycombing": {
+        Severity.MINOR: RemediationEstimate(
+            "Clean voids and fill with non-shrink repair mortar/grout.",
+            "INR 700-1,500 per sq m",
+            "Same day to 1 day",
+        ),
+        Severity.MODERATE: RemediationEstimate(
+            "Chip weak concrete, pressure grout deeper voids and finish with repair mortar.",
+            "INR 1,500-3,500 per sq m",
+            "1-3 days",
+        ),
+        Severity.SEVERE: RemediationEstimate(
+            "Remove defective concrete and rebuild section with micro-concrete or shotcrete.",
+            "INR 3,500-7,500 per sq m",
+            "3-7 days",
+        ),
+        Severity.CRITICAL: RemediationEstimate(
+            "Engineer assessment for loss of section; strengthen or recast affected member zone.",
+            "Engineer estimate required; often INR 7,500+ per sq m",
+            "1-3 weeks or more",
+        ),
+    },
+    "exposed_reinforcement": {
+        Severity.SEVERE: RemediationEstimate(
+            "Remove loose concrete, clean/passivate exposed steel and restore cover with repair mortar.",
+            "INR 3,000-7,000 per sq m",
+            "3-7 days",
+        ),
+        Severity.CRITICAL: RemediationEstimate(
+            "Engineer-led corrosion repair: expose full bar length, replace/augment steel and restore section.",
+            "Engineer estimate required; often INR 7,000+ per sq m",
+            "1-3 weeks or more",
+        ),
+    },
 }
 
 
@@ -66,8 +190,9 @@ class SeverityResult:
     standard: str = ""
     recommended_action: str = ""
     measured: str = ""
-
-
+    remedial_measure: str = ""
+    repair_cost_estimate: str = ""
+    repair_time_estimate: str = ""
 @dataclass(frozen=True)
 class CrackDimensions:
     """Real-world crack size, derived only when a scale reference is supplied.
@@ -113,6 +238,18 @@ DEFAULT_AREA_BANDS = (MINOR_AREA_RATIO, MODERATE_AREA_RATIO, 0.20)
 
 def _normalise(defect_class: str) -> str:
     return defect_class.strip().lower().replace(" ", "_")
+
+
+def _remediation_key(defect_class: str) -> str:
+    key = _normalise(defect_class)
+    if key in {"exposed_rebar", "rebar"}:
+        return "exposed_reinforcement"
+    return key
+
+
+def estimate_remediation(defect_class: str, severity: Severity) -> RemediationEstimate:
+    guide = REMEDIATION_GUIDE.get(_remediation_key(defect_class), {})
+    return guide.get(severity, GENERIC_REMEDIATION[severity])
 
 
 def _thresholds_for(defect_class: str) -> tuple[float, float]:
@@ -303,6 +440,8 @@ def estimate_severity(
             f"captured surface ({severity.label.lower()} by surface extent)."
         )
 
+    remediation = estimate_remediation(defect_class, severity)
+
     return SeverityResult(
         level=severity.label,
         reason=reason,
@@ -311,4 +450,7 @@ def estimate_severity(
         standard=standard,
         recommended_action=RECOMMENDED_ACTION[severity],
         measured=measured,
+        remedial_measure=remediation.remedial_measure,
+        repair_cost_estimate=remediation.repair_cost_estimate,
+        repair_time_estimate=remediation.repair_time_estimate,
     )

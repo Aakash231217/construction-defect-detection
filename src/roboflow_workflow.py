@@ -1,11 +1,16 @@
-"""Run the Roboflow "Detect and Classify" workflow.
+"""Run the Roboflow "Detect and Classify 2" workflow.
 
 Grounded in the workflow's real definition (workspace: aakashs-workspace-zqqzu,
-workflow_id: detect-and-classify):
+workflow_id: detect-and-classify-2):
 
   inputs : image (InferenceImage)
   outputs: output_image, predictions, dynamic_crop,
            detection_predictions, classification_predictions
+
+The workflow runs an object-detection model (``training-dataset-1gvqr/2``),
+dynamically crops each detection, classifies the crops, replaces the detection
+classes with the classification result, and renders bounding-box + label
+visualizations.
 
 `output_image` and `dynamic_crop` come back as base64-encoded images, so we
 decode them to disk instead of holding them in memory or logging them.
@@ -37,7 +42,7 @@ WORKFLOW_OUTPUT_KEYS = (
 )
 
 DEFAULT_WORKSPACE = "aakashs-workspace-zqqzu"
-DEFAULT_WORKFLOW_ID = "detect-and-classify"
+DEFAULT_WORKFLOW_ID = "detect-and-classify-2"
 DEFAULT_API_URL = "https://serverless.roboflow.com"
 DEFAULT_RETRIES = 2
 DEFAULT_BACKOFF = 1.5
