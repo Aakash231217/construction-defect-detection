@@ -136,14 +136,14 @@ if use_scale:
 st.sidebar.markdown("---")
 st.sidebar.subheader("Repair remedy (RAG)")
 gen_remedy = st.sidebar.checkbox("Generate repair remedy", value=True)
-use_openai_rag = st.sidebar.checkbox("Use OpenAI for remedy text", value=False,
-                                     disabled=not has_openai)
-openai_model = st.sidebar.text_input("OpenAI model", "gpt-4o-mini",
-                                     disabled=not use_openai_rag)
+use_openai_rag = st.sidebar.checkbox(
+    "Use AI engine for remedy text", value=False, disabled=not has_openai,
+    help="On = richer AI-written remedy; off = deterministic grounded remedy.")
+openai_model = "gpt-4o-mini"
 
 if not has_openai:
-    st.sidebar.info("OPENAI_API_KEY not set — AI fallback, element classification "
-                    "and OpenAI remedy text are disabled. Detection + severity still work.")
+    st.sidebar.info("AI engine key not set — AI fallback, element classification "
+                    "and AI remedy text are disabled. Detection + severity still work.")
 
 with st.sidebar.expander("How it works"):
     st.markdown(
@@ -241,9 +241,9 @@ with right:
                                      g["repair_time_estimate"], g["cost_breakup"],
                                      g["boq_breakup"], use_openai_rag, openai_model)
                 if rem["used_llm"]:
-                    st.success(f"Generated with OpenAI model: {rem['model']}")
+                    st.success("Generated with the AI engine.")
                 elif rem["llm_error"]:
-                    st.warning(f"OpenAI unavailable; showing grounded fallback: {rem['llm_error']}")
+                    st.warning("AI engine unavailable; showing the grounded remedy instead.")
                 st.markdown(rem["answer"])
                 if rem["sources"]:
                     st.caption("Sources: " + "; ".join(rem["sources"]))
