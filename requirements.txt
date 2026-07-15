@@ -1,10 +1,10 @@
-ultralytics>=8.3.0
+# Runtime requirements for the hosted Streamlit app (Hugging Face Space).
+# Detection runs on the Roboflow + AI APIs, so no torch/GPU is needed here.
+# For local training / report generation, install requirements-dev.txt instead.
 streamlit>=1.35.0
-opencv-python>=4.9.0
 pillow>=10.0.0
-numpy>=1.26.0
 pandas>=2.2.0
-matplotlib>=3.8.0
-pyyaml>=6.0.1
+numpy>=1.26.0
 inference-sdk>=0.50.0
 python-dotenv>=1.0.1
+openai>=1.0.0

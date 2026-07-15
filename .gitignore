@@ -7,3 +7,7 @@ outputs/
 models/*.pt
 .env
 .DS_Store
+report_images/
+testimages/
+last_report.html
+*_detections_cache.json

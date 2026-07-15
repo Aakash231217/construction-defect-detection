@@ -1,0 +1,79 @@
+[
+  {
+    "id": "crack-minor",
+    "defect": "crack",
+    "severity": ["Minor"],
+    "source": "ACI 224R-01 / IS 456:2000 Cl. 35.3.2",
+    "content": "Minor hairline cracks are normally treated as durability or serviceability issues. Clean the crack line, remove dust and loose particles, seal the crack using acrylic, PU or compatible surface sealant, and monitor for movement. Quantity is measured as crack length in running metres. Cost is calculated as crack length multiplied by sealant repair rate."
+  },
+  {
+    "id": "crack-moderate",
+    "defect": "crack",
+    "severity": ["Moderate"],
+    "source": "ACI 224R-01 / IS 456:2000 Cl. 35.3.2",
+    "content": "Moderate cracks require investigation of moisture ingress and crack activity. Recommended repair is route-and-seal or epoxy injection along the measured crack length. Quantity is the crack length in running metres. Rate analysis should include epoxy resin or sealant, injection packers, drilling, skilled labour and injection equipment."
+  },
+  {
+    "id": "crack-severe-critical",
+    "defect": "crack",
+    "severity": ["Severe", "Critical"],
+    "source": "ACI 224R-01 / ACI 562 / IS 456:2000",
+    "content": "Severe or critical cracking requires structural engineering review before repair. Typical remedies include structural epoxy injection, crack stitching, local strengthening, load restriction and temporary support where required. Quantity is based on crack length, but an effective length factor is applied because stitching bars and strengthening extend beyond the visible crack."
+  },
+  {
+    "id": "spalling-minor-moderate",
+    "defect": "spalling",
+    "severity": ["Minor", "Moderate"],
+    "source": "ICRI 310.1 / Concrete Society TR54",
+    "content": "Minor to moderate spalling is repaired by removing loose or delaminated concrete, cleaning the substrate, treating any visible reinforcement, applying bonding agent if required, and reinstating cover using polymer-modified repair mortar. Quantity is normally measured as affected surface area in square metres."
+  },
+  {
+    "id": "spalling-severe-critical",
+    "defect": "spalling",
+    "severity": ["Severe", "Critical"],
+    "source": "ICRI 310.1 / ACI 562 / Concrete Society TR54",
+    "content": "Severe spalling or deep delamination may indicate corrosion or section loss. Unsound concrete must be broken out to sound material, reinforcement cleaned or replaced, corrosion protection applied, and the section restored using micro-concrete, shotcrete or engineer-designed strengthening. If depth is known, quantity should be computed as volume: area multiplied by repair depth."
+  },
+  {
+    "id": "honeycombing-minor-moderate",
+    "defect": "honeycombing",
+    "severity": ["Minor", "Moderate"],
+    "source": "IS 456:2000 Cl. 12 / ACI 309",
+    "content": "Honeycombing is caused by poor compaction, segregation or inadequate concrete flow. Minor to moderate surface honeycombing is repaired by removing weak concrete, cleaning voids, filling with non-shrink grout or repair mortar, and finishing the surface. Quantity is generally measured as affected area in square metres."
+  },
+  {
+    "id": "honeycombing-severe-critical",
+    "defect": "honeycombing",
+    "severity": ["Severe", "Critical"],
+    "source": "IS 456:2000 / ACI 309 / ACI 562",
+    "content": "Deep honeycombing can reduce cover, strength and durability. Severe cases require engineer review, removal of defective concrete, pressure grouting or rebuilding with micro-concrete or shotcrete. When depth is measured, quantity should be volume: affected area multiplied by void depth."
+  },
+  {
+    "id": "exposed-rebar-severe-critical",
+    "defect": "exposed_reinforcement",
+    "severity": ["Severe", "Critical"],
+    "source": "ICRI 310.1 / ACI 562",
+    "content": "Exposed reinforcement means loss of concrete cover and active corrosion risk. Repair requires breaking out loose concrete, exposing sufficient bar length, cleaning or replacing corroded steel, applying corrosion inhibitor or passivating coating, and restoring cover with repair mortar or micro-concrete. Quantity is measured as cover restoration area in square metres, with an effective area factor for critical cases."
+  },
+  {
+    "id": "mold-dampness-treatment",
+    "defect": "mold",
+    "severity": ["Minor", "Moderate", "Severe", "Critical"],
+    "source": "Building maintenance practice / CPWD-style waterproofing and plaster repair norms",
+    "content": "Mold or dampness indicates moisture ingress, leakage, condensation or inadequate ventilation. Repair should first identify and stop the water source, then remove contaminated loose plaster or paint, clean with anti-fungal biocide wash, dry the surface, apply waterproof coating where required, and replaster or repaint the affected area. Quantity is measured as affected surface area in square metres. Rate analysis should include anti-fungal chemical, waterproof coating, plaster repair material, labour for scraping/cleaning/application and hand tools."
+  },
+  {
+    "id": "cost-quantity-rate",
+    "defect": "general",
+    "severity": ["Minor", "Moderate", "Severe", "Critical"],
+    "source": "Quantity surveying practice / CPWD-style rate analysis",
+    "content": "Repair cost must be calculated from quantity and rate analysis. Quantity may be running metre, square metre, cubic metre, kilogram or number depending on repair method. Composite rate is material rate plus labour rate plus equipment rate. Total cost equals quantity multiplied by composite rate, with separate material, labour and equipment cost breakup."
+  },
+  {
+    "id": "site-validation",
+    "defect": "general",
+    "severity": ["Minor", "Moderate", "Severe", "Critical"],
+    "source": "Engineering inspection practice",
+    "content": "Image-based measurements are preliminary. Final repair quantities and remedies must be confirmed by site inspection, crack gauge or scale reference, depth measurement, hammer sounding, cover meter readings, chloride/carbonation checks where relevant, access constraints and approval by a structural engineer."
+  }
+]

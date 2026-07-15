@@ -1,0 +1,8 @@
+# Full local/dev requirements: hosted app deps + training, local YOLO,
+# report/PDF generation and dataset tooling.
+-r requirements.txt
+
+ultralytics>=8.3.0        # local YOLO training / inference (models/best.pt)
+opencv-python>=4.9.0      # image IO for src/detect.py
+matplotlib>=3.8.0         # architecture + detection/severity PDF reports
+pyyaml>=6.0.1             # dataset config

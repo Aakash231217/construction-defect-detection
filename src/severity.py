@@ -29,8 +29,12 @@ engineer's repair specification.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
+from typing import Any
+
+from src.boq import BoqEstimate, compute_boq
+from src.cost_estimation import CostEstimate, estimate_repair_cost
 
 
 class Severity(IntEnum):
@@ -193,6 +197,13 @@ class SeverityResult:
     remedial_measure: str = ""
     repair_cost_estimate: str = ""
     repair_time_estimate: str = ""
+    # Quantity-based cost estimation (Quantity x Rate = Cost)
+    cost_estimate: CostEstimate | None = None
+    cost_breakup: dict[str, Any] = field(default_factory=dict)
+    # Norms-based BOQ: material/labour/equipment norms and rates retrieved from
+    # the RAG norms database; every line cost computed as quantity x rate.
+    boq: BoqEstimate | None = None
+    boq_breakup: dict[str, Any] = field(default_factory=dict)
 @dataclass(frozen=True)
 class CrackDimensions:
     """Real-world crack size, derived only when a scale reference is supplied.
@@ -232,12 +243,18 @@ DEFECT_AREA_BANDS: dict[str, tuple[float, float, float]] = {
     "spalling": (0.015, 0.06, 0.15),
     "honeycombing": (0.015, 0.06, 0.15),
     "exposed_reinforcement": (0.01, 0.05, 0.12),
+    "mold": (0.02, 0.08, 0.20),
 }
 DEFAULT_AREA_BANDS = (MINOR_AREA_RATIO, MODERATE_AREA_RATIO, 0.20)
 
 
 def _normalise(defect_class: str) -> str:
-    return defect_class.strip().lower().replace(" ", "_")
+    key = defect_class.strip().lower().replace(" ", "_")
+    if key in {"spall", "spalled_concrete"}:
+        return "spalling"
+    if key in {"mould", "dampness", "damp_patch", "moisture"}:
+        return "mold"
+    return key
 
 
 def _remediation_key(defect_class: str) -> str:
@@ -442,6 +459,35 @@ def estimate_severity(
 
     remediation = estimate_remediation(defect_class, severity)
 
+    # --- Quantity-based cost estimation (Quantity x Rate = Cost) ---
+    cost_estimate = estimate_repair_cost(
+        defect_class=defect_class,
+        severity_level=severity.label,
+        box_width_px=box_width,
+        box_height_px=box_height,
+        image_width_px=image_width,
+        image_height_px=image_height,
+        mm_per_pixel=mm_per_pixel,
+        depth_mm=depth_mm,
+        cover_mm=cover_mm if cover_mm is not None else 40.0,
+    )
+
+    # --- Norms-based BOQ (norms + rates retrieved, cost computed qty x rate) ---
+    # The BOQ work quantity must match the norms' work unit: running metre for
+    # cracks, surface area (sq m) for spalling/honeycombing/exposed steel.  The
+    # cost module may express deep repairs in cum, so recompute the area here.
+    if _remediation_key(defect_class) == "crack":
+        boq_work_quantity = cost_estimate.quantity.value  # running metre
+    elif mm_per_pixel:
+        boq_work_quantity = (box_width * mm_per_pixel) * (box_height * mm_per_pixel) / 1_000_000.0
+    else:
+        boq_work_quantity = area_ratio * 3.0  # same fallback as cost estimation
+    boq = compute_boq(
+        defect_class=defect_class,
+        severity_level=severity.label,
+        work_quantity=boq_work_quantity,
+    )
+
     return SeverityResult(
         level=severity.label,
         reason=reason,
@@ -451,6 +497,10 @@ def estimate_severity(
         recommended_action=RECOMMENDED_ACTION[severity],
         measured=measured,
         remedial_measure=remediation.remedial_measure,
-        repair_cost_estimate=remediation.repair_cost_estimate,
+        repair_cost_estimate=cost_estimate.formatted_summary(),
         repair_time_estimate=remediation.repair_time_estimate,
+        cost_estimate=cost_estimate,
+        cost_breakup=cost_estimate.to_dict(),
+        boq=boq,
+        boq_breakup=boq.to_dict(),
     )
