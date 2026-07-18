@@ -1,11 +1,10 @@
-# Runtime requirements for the hosted Streamlit app (Hugging Face Space).
-# Detection runs on the Roboflow + AI APIs, so no torch/GPU is needed here.
+# Runtime requirements for the hosted Streamlit app.
+# Detection is a direct HTTPS call to Roboflow (via requests) and the AI engine,
+# so there is no OpenCV / torch / GPU dependency — installs on any Python version.
 # For local training / report generation, install requirements-dev.txt instead.
 streamlit>=1.35.0
 pillow>=10.0.0
 pandas>=2.2.0
-numpy>=1.26.0
-inference-sdk>=0.50.0
-opencv-python-headless>=4.9.0   # required by inference-sdk (headless = no system libGL)
+requests>=2.31.0
 python-dotenv>=1.0.1
 openai>=1.0.0
