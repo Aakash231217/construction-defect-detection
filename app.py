@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 from PIL import Image
 
+from src.pipeline import annotate
 from src.roboflow_model import RoboflowModelError, run_model
 from src.remedy_rag import RemedyQuery, generate_rag_remedy
 from src.severity import estimate_severity, mm_per_pixel_from_reference
@@ -60,7 +61,11 @@ if mode == "Roboflow Hosted Model":
     if st.button("Run Roboflow Detection", type="primary"):
         try:
             inference = run_model(temporary_path)
-            predictions = inference.get("predictions", [])
+            predictions = [
+                item
+                for item in inference.get("predictions", [])
+                if float(item.get("confidence", 0.0)) >= confidence
+            ]
             inference_image = inference.get("image", {})
             source_width = float(inference_image.get("width", image_width))
             source_height = float(inference_image.get("height", image_height))
@@ -69,6 +74,7 @@ if mode == "Roboflow Hosted Model":
             if isinstance(predictions, list) and predictions:
                 rows = []
                 rag_reports = []
+                graded_detections = []
                 for item in predictions:
                     defect_class = str(item.get("class", ""))
                     severity = estimate_severity(
@@ -78,6 +84,21 @@ if mode == "Roboflow Hosted Model":
                         image_width=source_width,
                         image_height=source_height,
                         mm_per_pixel=mm_per_pixel,
+                    )
+                    box_width = float(item.get("width", 0.0))
+                    box_height = float(item.get("height", 0.0))
+                    center_x = float(item.get("x", 0.0))
+                    center_y = float(item.get("y", 0.0))
+                    graded_detections.append(
+                        {
+                            "box": (
+                                center_x - box_width / 2,
+                                center_y - box_height / 2,
+                                center_x + box_width / 2,
+                                center_y + box_height / 2,
+                            ),
+                            "severity": severity.level,
+                        }
                     )
                     rag_remedy = generate_rag_remedy(
                         RemedyQuery(
@@ -118,7 +139,20 @@ if mode == "Roboflow Hosted Model":
                             "RAG Sources": "; ".join(rag_remedy.sources),
                         }
                     )
-                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                annotated_path = annotate(
+                    temporary_path,
+                    graded_detections,
+                    Path("outputs/workflow/hosted_detection.jpg"),
+                )
+                output_column, table_column = st.columns([1.1, 1])
+                with output_column:
+                    st.image(
+                        str(annotated_path),
+                        caption="Detection Output (severity-colored boxes)",
+                        use_container_width=True,
+                    )
+                with table_column:
+                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
                 st.subheader("RAG Remedy Generation")
                 for index, (defect_name, severity_level, rag_remedy) in enumerate(rag_reports, start=1):
                     with st.expander(f"{index}. {defect_name} - {severity_level} remedy plan"):
