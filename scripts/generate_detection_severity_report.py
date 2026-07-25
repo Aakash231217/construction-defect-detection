@@ -38,6 +38,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.roboflow_model import run_model, RoboflowModelError  # noqa: E402
 from src.severity import estimate_severity  # noqa: E402
+from src.cost_estimation import estimate_repair_days  # noqa: E402
 from src.vision_fallback import detect_with_gpt, classify_structural_element  # noqa: E402
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
@@ -155,6 +156,9 @@ def grade(preds: list[dict[str, Any]], w: int, h: int) -> list[dict[str, Any]]:
             "action": sev.recommended_action,
             "standard": sev.standard,
             "area_pct": sev.area_ratio * 100.0,
+            "total_cost": float((sev.cost_breakup or {}).get("total_cost", 0.0)),
+            "repair_days": estimate_repair_days(sev.boq_breakup, sev.level),
+            "repair_band": sev.repair_time_estimate,
         })
     # worst first
     order = ["Critical", "Severe", "Moderate", "Minor", "Negligible"]
@@ -458,14 +462,16 @@ def write_csv(records: list[dict[str, Any]], path: Path) -> None:
         w = csv.writer(fh)
         w.writerow(["image", "structural_element", "defect", "detection_source",
                     "confidence", "severity", "severity_score", "affected_extent_pct",
+                    "est_cost_inr", "repair_time_days", "repair_time_band",
                     "measurement_basis", "standard", "reason", "recommended_action"])
         for r in records:
             element = (r.get("element") or {}).get("element", "unknown")
             for g in r["graded"]:
                 w.writerow([r["name"], element, g["defect"], g["source"],
                             round(g["confidence"], 3), g["severity"], f"{g['score']}/4",
-                            round(g["area_pct"], 2), g["measured"], g["standard"],
-                            g["reason"], g["action"]])
+                            round(g["area_pct"], 2), round(g.get("total_cost", 0.0)),
+                            g.get("repair_days", ""), g.get("repair_band", ""),
+                            g["measured"], g["standard"], g["reason"], g["action"]])
 
 
 def main() -> None:

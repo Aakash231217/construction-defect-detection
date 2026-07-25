@@ -225,7 +225,7 @@ def page_system(pdf: PdfPages) -> None:
 
     b_gen = box(ax, 75, 22.5, 19.5, 12,
                 "Grounded Generation",
-                ["build_llm_prompt()", "-> OpenAI LLM  OR", "-> deterministic",
+                ["build_llm_prompt()", "-> AI Engine  OR", "-> deterministic",
                  "   grounded answer", "= RagRemedy"],
                 C_GEN, align="left", body_size=7.8)
 
@@ -317,7 +317,7 @@ def page_rag_core(pdf: PdfPages) -> None:
     # --- GENERATE (single box, two selectable paths) ---
     b_gen = box(ax, 85.8, 26, 11.2, 21,
                 "Generation",
-                ["IF OpenAI key:", "  generate_openai", "  _answer()", "  temp 0.2",
+                ["IF AI key set:", "  AI Engine", "  generation,", "  temp 0.2",
                  "", "ELSE (default):", "  generate_grounded", "  _answer()",
                  "  deterministic,", "  no key needed", "", "-> RagRemedy"],
                 C_GEN, align="left", body_size=7.1)
