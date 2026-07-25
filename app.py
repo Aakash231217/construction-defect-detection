@@ -7,11 +7,7 @@ import pandas as pd
 import streamlit as st
 from PIL import Image
 
-from src.roboflow_workflow import (
-    RoboflowWorkflowError,
-    parse_workflow_result,
-    run_workflow,
-)
+from src.roboflow_model import RoboflowModelError, run_model
 from src.remedy_rag import RemedyQuery, generate_rag_remedy
 from src.severity import estimate_severity, mm_per_pixel_from_reference
 
@@ -19,7 +15,7 @@ from src.severity import estimate_severity, mm_per_pixel_from_reference
 st.set_page_config(page_title="Construction Defect Detection", layout="wide")
 st.title("Construction Defect Detection using YOLO")
 
-mode = st.sidebar.radio("Inference Mode", ["Roboflow Workflow", "Local YOLO Weights"])
+mode = st.sidebar.radio("Inference Mode", ["Roboflow Hosted Model", "Local YOLO Weights"])
 confidence = st.sidebar.slider("Confidence", 0.05, 0.95, 0.25, 0.05)
 
 st.sidebar.markdown("---")
@@ -59,28 +55,21 @@ with NamedTemporaryFile(delete=False, suffix=Path(uploaded_file.name).suffix) as
 image = Image.open(temporary_path).convert("RGB")
 image_width, image_height = image.size
 
-if mode == "Roboflow Workflow":
+if mode == "Roboflow Hosted Model":
     st.image(image, caption="Input Image", use_container_width=True)
     if st.button("Run Roboflow Detection", type="primary"):
         try:
-            raw = run_workflow(temporary_path)
-            output_dir = Path("outputs/workflow")
-            parsed = parse_workflow_result(raw[0], output_dir) if raw else None
-            st.success("Roboflow workflow completed.")
+            inference = run_model(temporary_path)
+            predictions = inference.get("predictions", [])
+            inference_image = inference.get("image", {})
+            source_width = float(inference_image.get("width", image_width))
+            source_height = float(inference_image.get("height", image_height))
+            st.success("Roboflow hosted detection completed.")
 
-            if parsed and "output_image" in parsed.saved_images:
-                st.image(
-                    str(parsed.saved_images["output_image"]),
-                    caption="Workflow Visualization",
-                    use_container_width=True,
-                )
-
-            if parsed and parsed.predictions:
-                source_width = parsed.image_width or image_width
-                source_height = parsed.image_height or image_height
+            if isinstance(predictions, list) and predictions:
                 rows = []
                 rag_reports = []
-                for item in parsed.predictions:
+                for item in predictions:
                     defect_class = str(item.get("class", ""))
                     severity = estimate_severity(
                         defect_class=defect_class or "defect",
@@ -141,14 +130,9 @@ if mode == "Roboflow Workflow":
                         st.caption("LLM prompt is generated from retrieved context and can be sent to Mistral 7B or another model.")
                         st.code(rag_remedy.prompt, language="text")
             else:
-                st.warning("No defects returned by the workflow.")
-        except RoboflowWorkflowError as error:
+                st.warning("No defects returned by the hosted model.")
+        except (RoboflowModelError, FileNotFoundError) as error:
             st.error(str(error))
-            st.info(
-                "The workflow's classification block points to the sample model `car-colors-1smyc/5`. "
-                "Open the workflow in Roboflow and either remove the classification step or point it at a "
-                "real construction-defect classifier; the detection model `training-dataset-1gvqr/2` works on its own."
-            )
     st.stop()
 
 model_path = st.sidebar.text_input("Model weights", "models/best.pt")
