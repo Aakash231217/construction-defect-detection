@@ -77,6 +77,7 @@ def run_detection(
                     "labour_rate": severity.cost_breakup.get("labour_rate", ""),
                     "equipment_rate": severity.cost_breakup.get("equipment_rate", ""),
                     "composite_rate": severity.cost_breakup.get("composite_rate", ""),
+                    "final_boq_rate_incl_overheads_gst": severity.cost_breakup.get("composite_rate", ""),
                     "material_cost": round(severity.cost_breakup.get("material_cost", 0), 2),
                     "labour_cost": round(severity.cost_breakup.get("labour_cost", 0), 2),
                     "equipment_cost": round(severity.cost_breakup.get("equipment_cost", 0), 2),

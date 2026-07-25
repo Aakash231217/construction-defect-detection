@@ -269,6 +269,43 @@ def estimate_remediation(defect_class: str, severity: Severity) -> RemediationEs
     return guide.get(severity, GENERIC_REMEDIATION[severity])
 
 
+def _display_cost_breakup(cost_estimate: CostEstimate, boq: BoqEstimate) -> dict[str, Any]:
+    """Return one reconciled estimate for user-facing outputs.
+
+    The initial estimator is useful for selecting a repair quantity, but the
+    BOQ is the authoritative displayed estimate because it derives every line
+    from the retrieved norms and includes overheads and GST.
+    """
+    if not boq.norms_found or boq.work_quantity <= 0:
+        return cost_estimate.to_dict()
+
+    quantity = boq.work_quantity
+    material_rate = boq.material_total / quantity
+    labour_rate = boq.labour_total / quantity
+    equipment_rate = boq.equipment_total / quantity
+    base_rate = boq.subtotal / quantity
+    final_rate = boq.grand_total / quantity
+    return {
+        "quantity": f"{quantity:.2f} {boq.work_unit}",
+        "quantity_value": quantity,
+        "quantity_unit": boq.work_unit,
+        "quantity_description": "BOQ work quantity used to calculate all norms-based line items.",
+        "material_rate": material_rate,
+        "labour_rate": labour_rate,
+        "equipment_rate": equipment_rate,
+        "base_rate": base_rate,
+        "composite_rate": final_rate,
+        "material_cost": boq.material_total,
+        "labour_cost": boq.labour_total,
+        "equipment_cost": boq.equipment_total,
+        "subtotal": boq.subtotal,
+        "overheads": boq.overheads,
+        "gst": boq.gst,
+        "total_cost": boq.grand_total,
+        "notes": "Norms-based BOQ total including overheads and GST. Every BOQ line equals quantity x rate.",
+    }
+
+
 def _thresholds_for(defect_class: str) -> tuple[float, float]:
     """Back-compat helper: (minor_max, moderate_max) area thresholds."""
     minor_max, moderate_max, _ = DEFECT_AREA_BANDS.get(_normalise(defect_class), DEFAULT_AREA_BANDS)
@@ -487,6 +524,9 @@ def estimate_severity(
         severity_level=severity.label,
         work_quantity=boq_work_quantity,
     )
+    display_cost_breakup = _display_cost_breakup(cost_estimate, boq)
+    display_rate = display_cost_breakup["composite_rate"]
+    display_total = display_cost_breakup["total_cost"]
 
     return SeverityResult(
         level=severity.label,
@@ -497,10 +537,14 @@ def estimate_severity(
         recommended_action=RECOMMENDED_ACTION[severity],
         measured=measured,
         remedial_measure=remediation.remedial_measure,
-        repair_cost_estimate=cost_estimate.formatted_summary(),
+        repair_cost_estimate=(
+            f"BOQ total: INR {display_total:.0f} | "
+            f"Final rate: INR {display_rate:.0f}/{display_cost_breakup['quantity_unit']} "
+            f"(includes overheads and GST)"
+        ),
         repair_time_estimate=remediation.repair_time_estimate,
         cost_estimate=cost_estimate,
-        cost_breakup=cost_estimate.to_dict(),
+        cost_breakup=display_cost_breakup,
         boq=boq,
         boq_breakup=boq.to_dict(),
     )

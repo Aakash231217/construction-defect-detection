@@ -95,6 +95,7 @@ def _to_row(
         "labour_rate": severity.cost_breakup.get("labour_rate", ""),
         "equipment_rate": severity.cost_breakup.get("equipment_rate", ""),
         "composite_rate": severity.cost_breakup.get("composite_rate", ""),
+        "final_boq_rate_incl_overheads_gst": severity.cost_breakup.get("composite_rate", ""),
         "total_repair_cost": round(float(severity.cost_breakup.get("total_cost", 0.0)), 2),
         "repair_time_estimate": severity.repair_time_estimate,
         "rag_used_openai": rag.used_llm,
@@ -138,7 +139,7 @@ def _write_html(rows: list[dict[str, Any]], annotated_images: list[Path], html_p
             f"<td>{html.escape(str(row['confidence']))}</td>"
             f"<td>{html.escape(str(row['severity']))}</td>"
             f"<td>{html.escape(str(row['repair_quantity']))}</td>"
-            f"<td>{html.escape(str(row['composite_rate']))}</td>"
+            f"<td>{html.escape(str(row['final_boq_rate_incl_overheads_gst']))}</td>"
             f"<td>{html.escape(str(row['total_repair_cost']))}</td>"
             f"<td>{html.escape(str(row['repair_time_estimate']))}</td>"
             f"<td>{html.escape(str(row['rag_sources']))}</td>"
@@ -242,7 +243,7 @@ def _write_html(rows: list[dict[str, Any]], annotated_images: list[Path], html_p
         <table>
           <thead>
             <tr>
-              <th>Image</th><th>Defect</th><th>Confidence</th><th>Severity</th><th>Quantity</th><th>Composite Rate</th><th>Total Cost</th><th>Time</th><th>RAG Sources</th>
+              <th>Image</th><th>Defect</th><th>Confidence</th><th>Severity</th><th>Quantity</th><th>Final BOQ Rate (incl. OH/GST)</th><th>Final BOQ Total</th><th>Time</th><th>RAG Sources</th>
             </tr>
           </thead>
           <tbody>{''.join(row_html)}</tbody>

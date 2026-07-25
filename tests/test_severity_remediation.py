@@ -159,6 +159,13 @@ def test_boq_lines_use_norms_and_qty_x_rate() -> None:
     assert abs(boq.gst - (subtotal + boq.overheads) * 0.18) < 1e-6
     assert abs(boq.grand_total - (subtotal + boq.overheads + boq.gst)) < 1e-6
 
+    # User-facing estimate must match the RAG remedy's BOQ grand total.
+    assert abs(result.cost_breakup["total_cost"] - boq.grand_total) < 0.01
+    assert abs(
+        result.cost_breakup["composite_rate"]
+        - boq.grand_total / boq.work_quantity
+    ) < 0.01
+
     # Moderate crack must include epoxy injection material and labour man-days
     descriptions = " ".join(line.description.lower() for line in boq.lines)
     assert "epoxy" in descriptions
