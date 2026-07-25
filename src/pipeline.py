@@ -24,6 +24,7 @@ from PIL import Image, ImageDraw, ImageFont
 from src.roboflow_model import run_model, RoboflowModelError  # noqa: F401
 from src.vision_fallback import detect_with_gpt, classify_structural_element
 from src.severity import estimate_severity
+from src.cost_estimation import estimate_repair_days
 
 ROOT = Path(__file__).resolve().parents[1]
 MANUAL_PATH = ROOT / "data" / "manual_detections.json"
@@ -146,9 +147,14 @@ def grade(preds: list[dict[str, Any]], w: int, h: int,
             "action": sev.recommended_action,
             "standard": sev.standard,
             "area_pct": sev.area_ratio * 100.0,
-            # richer fields used by the app (remedy / cost / BOQ)
+            # richer fields used by the app (remedy / cost / time / BOQ)
             "remedial_measure": sev.remedial_measure,
             "repair_time_estimate": sev.repair_time_estimate,
+            "repair_days": estimate_repair_days(sev.boq_breakup, sev.level),
+            "total_cost": float((sev.cost_breakup or {}).get("total_cost", 0.0)),
+            "material_cost": float((sev.cost_breakup or {}).get("material_cost", 0.0)),
+            "labour_cost": float((sev.cost_breakup or {}).get("labour_cost", 0.0)),
+            "equipment_cost": float((sev.cost_breakup or {}).get("equipment_cost", 0.0)),
             "cost_breakup": sev.cost_breakup,
             "boq_breakup": sev.boq_breakup,
         })

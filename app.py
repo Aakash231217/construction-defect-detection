@@ -231,6 +231,12 @@ with right:
                     f'{g["reason"]}</div>', unsafe_allow_html=True)
         st.markdown(f'<div style="font-size:12px;color:{edge}"><b>Recommended action:</b> '
                     f'{g["action"]}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="font-size:12px;color:#1b2433;margin-top:2px">'
+            f'<b>Est. repair cost:</b> INR {g["total_cost"]:,.0f} &nbsp;·&nbsp; '
+            f'<b>Repair time:</b> ~{g["repair_days"]} working day(s) '
+            f'<span style="color:#5b6675">(band: {g["repair_time_estimate"]})</span></div>',
+            unsafe_allow_html=True)
         st.caption(f"Basis: {g['measured']} · Standard: {g['standard']}")
 
         if gen_remedy:
@@ -260,14 +266,74 @@ if graded:
         "Defect": g["defect"].replace("_", " ").title(),
         "Detection source": g["source"], "Confidence": round(g["confidence"], 3),
         "Severity": g["severity"], "Severity score": f"{g['score']}/4",
-        "Affected extent %": round(g["area_pct"], 2), "Basis": g["measured"],
-        "Standard": g["standard"], "Recommended action": g["action"],
+        "Affected extent %": round(g["area_pct"], 2),
+        "Est. cost (INR)": round(g["total_cost"]),
+        "Repair time (days)": g["repair_days"],
+        "Repair time (band)": g["repair_time_estimate"],
+        "Basis": g["measured"], "Standard": g["standard"],
+        "Recommended action": g["action"],
     } for i, g in enumerate(graded, start=1)]
     df = pd.DataFrame(rows)
     st.dataframe(df, use_container_width=True, hide_index=True)
     st.download_button("⬇️ Download results (CSV)", df.to_csv(index=False).encode("utf-8"),
                        file_name=f"{Path(uploaded.name).stem}_detections.csv",
                        mime="text/csv")
+
+    # -----------------------------------------------------------------------
+    # Cost & Time analysis + charts
+    # -----------------------------------------------------------------------
+    st.subheader("Cost & Time Analysis")
+    total_cost = sum(g["total_cost"] for g in graded)
+    total_days = sum(g["repair_days"] for g in graded)
+    longest = max((g["repair_days"] for g in graded), default=0)
+    k1, k2, k3 = st.columns(3)
+    k1.metric("Total estimated cost", f"INR {total_cost:,.0f}")
+    k2.metric("Total repair time", f"{total_days} working days",
+              help="Sum of all repairs (sequential upper bound).")
+    k3.metric("Longest single repair", f"{longest} days",
+              help="Critical-path duration if repairs run in parallel.")
+
+    labels = [f"{i}. {g['defect'].replace('_', ' ').title()}"
+              for i, g in enumerate(graded, start=1)]
+
+    c_left, c_right = st.columns(2)
+    with c_left:
+        st.markdown("**Cost breakdown per defect (INR)**")
+        cost_df = pd.DataFrame(
+            {"Material": [g["material_cost"] for g in graded],
+             "Labour": [g["labour_cost"] for g in graded],
+             "Equipment": [g["equipment_cost"] for g in graded]},
+            index=labels)
+        st.bar_chart(cost_df, height=260)
+    with c_right:
+        st.markdown("**Repair time per defect (working days)**")
+        time_df = pd.DataFrame({"Repair days": [g["repair_days"] for g in graded]},
+                               index=labels)
+        st.bar_chart(time_df, height=260, color="#e08a1e")
+
+    c_a, c_b = st.columns(2)
+    with c_a:
+        st.markdown("**Severity distribution**")
+        order = ["Minor", "Moderate", "Severe", "Critical"]
+        counts = {s: sum(1 for g in graded if g["severity"] == s) for s in order}
+        sev_df = pd.DataFrame({"Detections": list(counts.values())},
+                              index=list(counts.keys()))
+        st.bar_chart(sev_df, height=260, color="#d83a52")
+    with c_b:
+        st.markdown("**Cumulative cost curve (Pareto)**")
+        ranked = sorted(graded, key=lambda g: g["total_cost"], reverse=True)
+        cum, running = [], 0.0
+        for g in ranked:
+            running += g["total_cost"]
+            cum.append(round(running))
+        cum_df = pd.DataFrame(
+            {"Cumulative cost (INR)": cum},
+            index=[f"{i}. {g['defect'].replace('_', ' ').title()}"
+                   for i, g in enumerate(ranked, start=1)])
+        st.area_chart(cum_df, height=260, color="#3b74d4")
+    st.caption("Cost = quantity × rate (material + labour + equipment). Repair time "
+               "= labour man-days ÷ crew + curing allowance. Both are preliminary "
+               "planning estimates; confirm quantities and local rates on site.")
 
 st.caption("Detection: Roboflow model + AI vision detector fallback. Structural "
            "element and (optional) remedy text are AI-generated. Image-based "

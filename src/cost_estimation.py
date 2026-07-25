@@ -613,3 +613,48 @@ def estimate_repair_cost(
         rate,
         notes="Generic area-based estimate; confirm defect type and repair method with engineer.",
     )
+
+
+# ---------------------------------------------------------------------------
+# Repair time (duration in working days)
+# ---------------------------------------------------------------------------
+# Duration is derived the way a site engineer would: labour man-days (from the
+# BOQ norms x measured quantity) divided by the crew size, plus a curing /
+# mobilisation allowance that grows with severity. When BOQ man-days are not
+# available, a severity-band fallback is used. All values are working days.
+
+_CURE_DAYS = {"minor": 0.5, "moderate": 1.0, "severe": 2.0, "critical": 3.0}
+_FALLBACK_DAYS = {"minor": 1, "moderate": 2, "severe": 5, "critical": 14}
+
+
+def estimate_repair_days(
+    boq_breakup: dict | None,
+    severity_level: str,
+    crew_size: int = 2,
+) -> int:
+    """Estimate repair duration in working days.
+
+    duration = (labour man-days / crew size) + curing/mobilisation allowance
+
+    Parameters
+    ----------
+    boq_breakup
+        The norms-based BOQ dict (may contain labour line quantities in man-days).
+    severity_level
+        Minor / Moderate / Severe / Critical.
+    crew_size
+        Number of workers on the repair crew (default 2).
+    """
+    level = _severity_key(severity_level)
+    labour_mandays = 0.0
+    if boq_breakup and boq_breakup.get("norms_found"):
+        for line in boq_breakup.get("lines", []):
+            if line.get("category") == "labour":
+                labour_mandays += float(line.get("quantity", 0.0))
+
+    cure = _CURE_DAYS.get(level, 1.0)
+    if labour_mandays > 0:
+        total = labour_mandays / max(1, crew_size) + cure
+    else:
+        total = float(_FALLBACK_DAYS.get(level, 3))
+    return max(1, round(total))
