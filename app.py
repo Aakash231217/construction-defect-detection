@@ -98,7 +98,7 @@ def _render_detection_details(rows: list[dict], rag_reports: list[tuple], elemen
         )
         st.markdown(
             f'<div style="font-size:13px;color:#1b2433;margin-top:8px">'
-            f'<b>Est. repair cost:</b> INR {float(row["Total Repair Cost (INR)"]):,.0f} &nbsp;·&nbsp; '
+            f'<b>Total est. cost:</b> INR {float(row["Total Repair Cost (INR)"]):,.0f} &nbsp;·&nbsp; '
             f'<b>Repair time:</b> ~{row["Repair Time (days)"]} working day(s) '
             f'<span style="color:#5b6675">(band: {row["Repair Time Estimate"]})</span></div>',
             unsafe_allow_html=True,
