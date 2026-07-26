@@ -7,10 +7,86 @@ import pandas as pd
 import streamlit as st
 from PIL import Image
 
+from src.cost_estimation import estimate_repair_days
 from src.pipeline import annotate
 from src.roboflow_model import RoboflowModelError, run_model
 from src.remedy_rag import RemedyQuery, generate_rag_remedy
 from src.severity import estimate_severity, mm_per_pixel_from_reference
+
+
+def _render_cost_time_charts(rows: list[dict]) -> None:
+    if not rows:
+        return
+
+    st.subheader("Cost & Time Analysis")
+    total_cost = sum(float(row["Total Repair Cost (INR)"]) for row in rows)
+    total_days = sum(int(row["Repair Time (days)"]) for row in rows)
+    longest = max(int(row["Repair Time (days)"]) for row in rows)
+    cost_metric, time_metric, longest_metric = st.columns(3)
+    cost_metric.metric("Total estimated cost", f"INR {total_cost:,.0f}")
+    time_metric.metric(
+        "Total repair time",
+        f"{total_days} working days",
+        help="Sum of all repairs (sequential upper bound).",
+    )
+    longest_metric.metric(
+        "Longest single repair",
+        f"{longest} days",
+        help="Critical-path duration if repairs run in parallel.",
+    )
+
+    labels = [f"{index}. {row['Defect']}" for index, row in enumerate(rows, start=1)]
+    cost_column, time_column = st.columns(2)
+    with cost_column:
+        st.markdown("**Cost breakdown per defect (INR)**")
+        cost_data = pd.DataFrame(
+            {
+                "Material": [float(row["Material Cost (INR)"]) for row in rows],
+                "Labour": [float(row["Labour Cost (INR)"]) for row in rows],
+                "Equipment": [float(row["Equipment Cost (INR)"]) for row in rows],
+            },
+            index=labels,
+        )
+        st.bar_chart(cost_data, height=260)
+    with time_column:
+        st.markdown("**Repair time per defect (working days)**")
+        time_data = pd.DataFrame(
+            {"Repair days": [int(row["Repair Time (days)"]) for row in rows]},
+            index=labels,
+        )
+        st.bar_chart(time_data, height=260, color="#e08a1e")
+
+    severity_column, pareto_column = st.columns(2)
+    with severity_column:
+        st.markdown("**Severity distribution**")
+        severity_order = ["Minor", "Moderate", "Severe", "Critical"]
+        counts = {
+            severity: sum(1 for row in rows if row["Severity"] == severity)
+            for severity in severity_order
+        }
+        severity_data = pd.DataFrame(
+            {"Detections": list(counts.values())},
+            index=list(counts.keys()),
+        )
+        st.bar_chart(severity_data, height=260, color="#d83a52")
+    with pareto_column:
+        st.markdown("**Cumulative cost curve (Pareto)**")
+        ranked = sorted(rows, key=lambda row: float(row["Total Repair Cost (INR)"]), reverse=True)
+        cumulative_costs: list[float] = []
+        running_cost = 0.0
+        for row in ranked:
+            running_cost += float(row["Total Repair Cost (INR)"])
+            cumulative_costs.append(round(running_cost, 2))
+        pareto_data = pd.DataFrame(
+            {"Cumulative cost (INR)": cumulative_costs},
+            index=[f"{index}. {row['Defect']}" for index, row in enumerate(ranked, start=1)],
+        )
+        st.area_chart(pareto_data, height=260, color="#3b74d4")
+
+    st.caption(
+        "Cost = norms-based BOQ total including overheads and GST. Repair time = "
+        "labour man-days / crew + curing allowance. Confirm quantities and local rates on site."
+    )
 
 
 st.set_page_config(page_title="Construction Defect Detection", layout="wide")
@@ -135,6 +211,7 @@ if mode == "Roboflow Hosted Model":
                             "Labour Cost (INR)": round(severity.cost_breakup.get("labour_cost", 0), 2),
                             "Equipment Cost (INR)": round(severity.cost_breakup.get("equipment_cost", 0), 2),
                             "Total Repair Cost (INR)": round(severity.cost_breakup.get("total_cost", 0), 2),
+                            "Repair Time (days)": estimate_repair_days(severity.boq_breakup, severity.level),
                             "Repair Time Estimate": severity.repair_time_estimate,
                             "RAG Sources": "; ".join(rag_remedy.sources),
                         }
@@ -153,6 +230,7 @@ if mode == "Roboflow Hosted Model":
                     )
                 with table_column:
                     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                _render_cost_time_charts(rows)
                 st.subheader("RAG Remedy Generation")
                 for index, (defect_name, severity_level, rag_remedy) in enumerate(rag_reports, start=1):
                     with st.expander(f"{index}. {defect_name} - {severity_level} remedy plan"):
@@ -230,6 +308,7 @@ for box in result.boxes:
             "Labour Cost (INR)": round(severity.cost_breakup.get("labour_cost", 0), 2),
             "Equipment Cost (INR)": round(severity.cost_breakup.get("equipment_cost", 0), 2),
             "Total Repair Cost (INR)": round(severity.cost_breakup.get("total_cost", 0), 2),
+            "Repair Time (days)": estimate_repair_days(severity.boq_breakup, severity.level),
             "Repair Time Estimate": severity.repair_time_estimate,
             "RAG Sources": "; ".join(rag_remedy.sources),
         }
@@ -253,3 +332,5 @@ with right:
                 st.code(rag_remedy.prompt, language="text")
     else:
         st.warning("No defect detected at the selected confidence threshold.")
+
+_render_cost_time_charts(rows)
