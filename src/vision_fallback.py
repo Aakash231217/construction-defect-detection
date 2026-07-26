@@ -48,6 +48,15 @@ Guidance:
   compaction / segregation). Looks like clustered gravel/stones with gaps, no
   smooth paste surface. Common on formwork faces, footings and around openings.
 
+Mandatory two-pass inspection:
+1. Scan every concrete region, including image edges, behind tools or buckets,
+    and boundaries between smooth and rough concrete.
+2. Specifically check for honeycombing. A large rough aggregate field directly
+    beside smooth concrete is honeycombing unless it is clearly loose ground
+    outside the member. Do not require a crack or detached concrete chunk.
+3. If this texture occupies a visible concrete face, return honeycombing with a
+    tight box even when another object partly occludes it.
+
 Return STRICT JSON only, no prose:
 {{"detections": [
    {{"defect_class": "<one of the allowed classes>",

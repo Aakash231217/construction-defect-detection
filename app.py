@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -8,10 +9,11 @@ import streamlit as st
 from PIL import Image
 
 from src.cost_estimation import estimate_repair_days
-from src.pipeline import annotate, classify_element
+from src.pipeline import annotate, classify_element, merge_predictions
 from src.roboflow_model import RoboflowModelError, run_model
 from src.remedy_rag import RemedyQuery, generate_rag_remedy
 from src.severity import estimate_severity, mm_per_pixel_from_reference
+from src.vision_fallback import detect_with_gpt
 
 
 SEVERITY_COLORS = {
@@ -240,11 +242,10 @@ if use_scale:
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("RAG remedy generation")
-use_openai_rag = st.sidebar.checkbox("Use OpenAI for remedy text", value=False)
-openai_model = st.sidebar.text_input("OpenAI model", "gpt-4o-mini", disabled=not use_openai_rag)
+use_openai_rag = st.sidebar.checkbox("Use AI engine for remedy text", value=False)
+openai_model = "gpt-4o-mini"
 st.sidebar.caption(
-    "OpenAI uses the retrieved engineering context and detected defect data. "
-    "Set OPENAI_API_KEY in your environment or .env file."
+    "The AI engine uses retrieved engineering context and detected defect data."
 )
 classify_structure = st.sidebar.checkbox(
     "Classify structural element",
@@ -270,11 +271,30 @@ if mode == "Roboflow Hosted Model":
     if st.button("Run Roboflow Detection", type="primary"):
         try:
             inference = run_model(temporary_path)
-            predictions = [
+            primary_predictions = [
                 item
                 for item in inference.get("predictions", [])
                 if float(item.get("confidence", 0.0)) >= confidence
             ]
+            for item in primary_predictions:
+                item["source"] = "Primary detector"
+            secondary_predictions = []
+            if os.getenv("OPENAI_API_KEY"):
+                try:
+                    secondary_predictions, _, _ = detect_with_gpt(
+                        temporary_path,
+                        model="gpt-4o",
+                    )
+                    secondary_predictions = [
+                        item
+                        for item in secondary_predictions
+                        if float(item.get("confidence", 0.0)) >= confidence
+                    ]
+                    for item in secondary_predictions:
+                        item["source"] = "Secondary detector"
+                except Exception:
+                    secondary_predictions = []
+            predictions = merge_predictions(primary_predictions, secondary_predictions)
             inference_image = inference.get("image", {})
             source_width = float(inference_image.get("width", image_width))
             source_height = float(inference_image.get("height", image_height))
@@ -331,7 +351,7 @@ if mode == "Roboflow Hosted Model":
                             "Severity": severity.level,
                             "Severity Score": severity.score,
                             "Affected Area %": round(severity.area_ratio * 100, 2),
-                            "Detection Source": "Roboflow",
+                            "Detection Source": str(item.get("source", "Primary detector")),
                             "Basis": severity.measured,
                             "Standard": severity.standard,
                             "Remark": severity.reason,

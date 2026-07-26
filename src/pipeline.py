@@ -77,6 +77,51 @@ def _as_dict(result: Any) -> dict[str, Any]:
     return dict(result)  # last resort
 
 
+def _prediction_bounds(prediction: dict[str, Any]) -> tuple[float, float, float, float]:
+    width = float(prediction.get("width", 0.0))
+    height = float(prediction.get("height", 0.0))
+    center_x = float(prediction.get("x", 0.0))
+    center_y = float(prediction.get("y", 0.0))
+    return (
+        center_x - width / 2,
+        center_y - height / 2,
+        center_x + width / 2,
+        center_y + height / 2,
+    )
+
+
+def _prediction_iou(left: dict[str, Any], right: dict[str, Any]) -> float:
+    left_x1, left_y1, left_x2, left_y2 = _prediction_bounds(left)
+    right_x1, right_y1, right_x2, right_y2 = _prediction_bounds(right)
+    intersection_width = max(0.0, min(left_x2, right_x2) - max(left_x1, right_x1))
+    intersection_height = max(0.0, min(left_y2, right_y2) - max(left_y1, right_y1))
+    intersection = intersection_width * intersection_height
+    left_area = max(0.0, left_x2 - left_x1) * max(0.0, left_y2 - left_y1)
+    right_area = max(0.0, right_x2 - right_x1) * max(0.0, right_y2 - right_y1)
+    union = left_area + right_area - intersection
+    return intersection / union if union > 0 else 0.0
+
+
+def merge_predictions(
+    primary: list[dict[str, Any]],
+    secondary: list[dict[str, Any]],
+    *,
+    iou_threshold: float = 0.5,
+) -> list[dict[str, Any]]:
+    """Supplement primary detections, dropping only same-class overlaps."""
+    merged = [dict(prediction) for prediction in primary]
+    for candidate in secondary:
+        candidate_class = str(candidate.get("class", "")).strip().lower().replace(" ", "_")
+        duplicate = any(
+            str(existing.get("class", "")).strip().lower().replace(" ", "_") == candidate_class
+            and _prediction_iou(existing, candidate) >= iou_threshold
+            for existing in merged
+        )
+        if not duplicate:
+            merged.append(dict(candidate))
+    return merged
+
+
 def detect_roboflow(image_path: str | Path, conf: float) -> tuple[list[dict[str, Any]], int, int]:
     """Return (predictions, image_width, image_height) from the Roboflow model."""
     image_path = Path(image_path)
@@ -220,13 +265,18 @@ def analyze(
         preds, w, h = detect_roboflow(image_path, conf)
     except Exception:
         preds, w, h = [], 0, 0
-    if not preds:
-        roboflow_empty = True
-        if use_fallback:
-            try:
-                preds, w, h = detect_with_gpt(image_path, model=gpt_model)
-            except Exception:
-                preds = preds or []
+    roboflow_empty = not preds
+    if use_fallback:
+        try:
+            secondary_preds, secondary_width, secondary_height = detect_with_gpt(
+                image_path,
+                model=gpt_model,
+            )
+            preds = merge_predictions(preds, secondary_preds)
+            w = w or secondary_width
+            h = h or secondary_height
+        except Exception:
+            pass
     if not w or not h:
         with Image.open(image_path) as im:
             w, h = im.size
