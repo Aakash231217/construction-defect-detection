@@ -56,6 +56,11 @@ Mandatory two-pass inspection:
     outside the member. Do not require a crack or detached concrete chunk.
 3. If this texture occupies a visible concrete face, return honeycombing with a
     tight box even when another object partly occludes it.
+4. Inspect every crack and spalled edge for small rust-brown or metallic linear
+    segments emerging through concrete. Exposed reinforcement does not require
+    a full long bar: a short corroded steel segment or bar end visible through
+    lost cover counts. If cracking and exposed steel are both present, return
+    separate crack and exposed_reinforcement detections with their own boxes.
 
 Return STRICT JSON only, no prose:
 {{"detections": [

@@ -102,6 +102,25 @@ def _prediction_iou(left: dict[str, Any], right: dict[str, Any]) -> float:
     return intersection / union if union > 0 else 0.0
 
 
+def normalise_detection_class(value: Any) -> str:
+    key = str(value or "defect").strip().lower().replace(" ", "_").replace("-", "_")
+    aliases = {
+        "spall": "spalling",
+        "spalled_concrete": "spalling",
+        "honeycomb": "honeycombing",
+        "honey_combing": "honeycombing",
+        "mould": "mold",
+        "dampness": "mold",
+        "damp_patch": "mold",
+        "exposed_rebar": "exposed_reinforcement",
+        "rebar": "exposed_reinforcement",
+        "reinforcement_exposed": "exposed_reinforcement",
+        "white_bleeding": "efflorescence",
+        "leaching": "efflorescence",
+    }
+    return aliases.get(key, key)
+
+
 def merge_predictions(
     primary: list[dict[str, Any]],
     secondary: list[dict[str, Any]],
@@ -109,16 +128,22 @@ def merge_predictions(
     iou_threshold: float = 0.5,
 ) -> list[dict[str, Any]]:
     """Supplement primary detections, dropping only same-class overlaps."""
-    merged = [dict(prediction) for prediction in primary]
+    merged = []
+    for prediction in primary:
+        normalized = dict(prediction)
+        normalized["class"] = normalise_detection_class(prediction.get("class"))
+        merged.append(normalized)
     for candidate in secondary:
-        candidate_class = str(candidate.get("class", "")).strip().lower().replace(" ", "_")
+        normalized_candidate = dict(candidate)
+        candidate_class = normalise_detection_class(candidate.get("class"))
+        normalized_candidate["class"] = candidate_class
         duplicate = any(
-            str(existing.get("class", "")).strip().lower().replace(" ", "_") == candidate_class
-            and _prediction_iou(existing, candidate) >= iou_threshold
+            normalise_detection_class(existing.get("class")) == candidate_class
+            and _prediction_iou(existing, normalized_candidate) >= iou_threshold
             for existing in merged
         )
         if not duplicate:
-            merged.append(dict(candidate))
+            merged.append(normalized_candidate)
     return merged
 
 
