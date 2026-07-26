@@ -8,10 +8,111 @@ import streamlit as st
 from PIL import Image
 
 from src.cost_estimation import estimate_repair_days
-from src.pipeline import annotate
+from src.pipeline import annotate, classify_element
 from src.roboflow_model import RoboflowModelError, run_model
 from src.remedy_rag import RemedyQuery, generate_rag_remedy
 from src.severity import estimate_severity, mm_per_pixel_from_reference
+
+
+SEVERITY_COLORS = {
+    "Negligible": ("#eef1f6", "#7a8698"),
+    "Minor": ("#e7f7ee", "#2f9e63"),
+    "Moderate": ("#fff3e0", "#e08a1e"),
+    "Severe": ("#ffe7d6", "#e2691a"),
+    "Critical": ("#ffe0e6", "#d83a52"),
+}
+SEVERITY_SHORT = {"Minor": "Minor", "Moderate": "Mod.", "Severe": "Severe", "Critical": "Crit."}
+
+
+def _severity_chip(level: str) -> str:
+    face, edge = SEVERITY_COLORS.get(level, SEVERITY_COLORS["Critical"])
+    return (
+        f'<span style="background:{face};color:{edge};border:1px solid {edge};'
+        f'border-radius:12px;padding:2px 12px;font-weight:700;font-size:12px;'
+        f'white-space:nowrap">{level.upper()}</span>'
+    )
+
+
+def _severity_meter(level: str) -> str:
+    cells = []
+    for name in ("Minor", "Moderate", "Severe", "Critical"):
+        _, edge = SEVERITY_COLORS[name]
+        active = name == level
+        cells.append(
+            f'<div style="flex:1;text-align:center;background:{edge if active else "#eef1f6"};'
+            f'color:{"#ffffff" if active else "#9aa4b2"};'
+            f'border:1px solid {edge if active else "#cdd4de"};border-radius:5px;'
+            f'padding:5px 0;font-size:12px;font-weight:{700 if active else 400}">'
+            f'{SEVERITY_SHORT[name]}</div>'
+        )
+    return f'<div style="display:flex;gap:6px;margin:8px 0">{"".join(cells)}</div>'
+
+
+def _render_detection_details(rows: list[dict], rag_reports: list[tuple], element_result: dict) -> None:
+    element = str(element_result.get("element", "unknown") or "unknown").replace("_", " ").title()
+    element_confidence = float(element_result.get("confidence", 0.0) or 0.0)
+    confidence_label = (
+        f"AI-classified · {element_confidence * 100:.0f}%"
+        if element_confidence
+        else "AI classification unavailable"
+    )
+    st.markdown(
+        f'<div style="border:1.5px solid #3b74d4;background:#eef4ff;border-radius:8px;'
+        f'padding:14px 16px;margin-bottom:14px">'
+        f'<span style="color:#3b74d4;font-weight:700;font-size:12px">STRUCTURAL ELEMENT</span>'
+        f'<div style="display:flex;justify-content:space-between;align-items:baseline">'
+        f'<span style="font-size:24px;font-weight:800;color:#1b2433">{element}</span>'
+        f'<span style="color:#5b6675;font-size:12px;font-style:italic">{confidence_label}</span>'
+        f'</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    for index, (row, rag_entry) in enumerate(zip(rows, rag_reports), start=1):
+        rag_report = rag_entry[2] if isinstance(rag_entry, tuple) else rag_entry
+        severity = str(row["Severity"])
+        _, edge = SEVERITY_COLORS.get(severity, SEVERITY_COLORS["Critical"])
+        st.markdown(
+            f'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">'
+            f'<span style="font-size:18px;font-weight:700;color:#1b2433">{index}. {row["Defect"]}</span>'
+            f'{_severity_chip(severity)}</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div style="font-size:13px;color:#1b2433;margin-top:4px">'
+            f'Severity <b>{row["Severity Score"]}/4</b> &nbsp;·&nbsp; '
+            f'extent <b>{float(row["Affected Area %"]):.1f}%</b> &nbsp;·&nbsp; '
+            f'conf {float(row["Confidence"]) * 100:.0f}% &nbsp;·&nbsp; '
+            f'<span style="color:#3b74d4;font-style:italic;font-weight:600">'
+            f'via {row["Detection Source"]}</span></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(_severity_meter(severity), unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="font-size:13px;color:#5b6675"><b>Reason:</b> {row["Remark"]}</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div style="font-size:13px;color:{edge};margin-top:4px"><b>Recommended action:</b> '
+            f'{row["Recommended Action"]}</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div style="font-size:13px;color:#1b2433;margin-top:8px">'
+            f'<b>Est. repair cost:</b> INR {float(row["Total Repair Cost (INR)"]):,.0f} &nbsp;·&nbsp; '
+            f'<b>Repair time:</b> ~{row["Repair Time (days)"]} working day(s) '
+            f'<span style="color:#5b6675">(band: {row["Repair Time Estimate"]})</span></div>',
+            unsafe_allow_html=True,
+        )
+        st.caption(f'Basis: {row["Basis"]} · Standard: {row["Standard"]}')
+        with st.expander(f'Repair remedy plan — {row["Defect"]}'):
+            if rag_report.used_llm:
+                st.success("Generated with the AI engine.")
+            elif rag_report.llm_error:
+                st.warning("AI engine unavailable; showing the grounded remedy instead.")
+            st.markdown(rag_report.answer)
+            if rag_report.sources:
+                st.caption("Sources: " + "; ".join(rag_report.sources))
+        st.markdown("<hr style='margin:10px 0;border:none;border-top:1px solid #e6e9ef'>", unsafe_allow_html=True)
 
 
 def _render_cost_time_charts(rows: list[dict]) -> None:
@@ -89,6 +190,33 @@ def _render_cost_time_charts(rows: list[dict]) -> None:
     )
 
 
+def _render_analysis_summary(
+    rows: list[dict],
+    element_result: dict,
+    image_width: float,
+    image_height: float,
+) -> None:
+    severity_rank = {"Negligible": 0, "Minor": 1, "Moderate": 2, "Severe": 3, "Critical": 4}
+    worst_severity = max(
+        (str(row["Severity"]) for row in rows),
+        key=lambda level: severity_rank.get(level, -1),
+        default="None",
+    )
+    element = str(element_result.get("element", "unknown") or "unknown").replace("_", " ").title()
+    confidence = float(element_result.get("confidence", 0.0) or 0.0)
+
+    detection_metric, severity_metric, element_metric, size_metric = st.columns(4)
+    detection_metric.metric("Detections", len(rows))
+    severity_metric.metric("Worst severity", worst_severity)
+    element_metric.metric(
+        "Structural element",
+        element,
+        help=f"AI-classified with {confidence * 100:.0f}% confidence" if confidence else "AI classification unavailable",
+    )
+    size_metric.metric("Image size", f"{int(image_width)} x {int(image_height)} px")
+    st.divider()
+
+
 st.set_page_config(page_title="Construction Defect Detection", layout="wide")
 st.title("Construction Defect Detection using YOLO")
 
@@ -117,6 +245,11 @@ openai_model = st.sidebar.text_input("OpenAI model", "gpt-4o-mini", disabled=not
 st.sidebar.caption(
     "OpenAI uses the retrieved engineering context and detected defect data. "
     "Set OPENAI_API_KEY in your environment or .env file."
+)
+classify_structure = st.sidebar.checkbox(
+    "Classify structural element",
+    value=True,
+    help="Identify the primary slab, wall, beam, column, staircase, footing, or other element.",
 )
 
 uploaded_file = st.file_uploader("Upload a concrete surface image", type=["jpg", "jpeg", "png"])
@@ -196,7 +329,9 @@ if mode == "Roboflow Hosted Model":
                             "Defect": defect_class.replace("_", " ").title(),
                             "Confidence": round(float(item.get("confidence", 0.0)), 3),
                             "Severity": severity.level,
+                            "Severity Score": severity.score,
                             "Affected Area %": round(severity.area_ratio * 100, 2),
+                            "Detection Source": "Roboflow",
                             "Basis": severity.measured,
                             "Standard": severity.standard,
                             "Remark": severity.reason,
@@ -221,6 +356,12 @@ if mode == "Roboflow Hosted Model":
                     graded_detections,
                     Path("outputs/workflow/hosted_detection.jpg"),
                 )
+                element_result = (
+                    classify_element(temporary_path, model="gpt-4o-mini")
+                    if classify_structure
+                    else {"element": "not classified", "confidence": 0.0}
+                )
+                _render_analysis_summary(rows, element_result, source_width, source_height)
                 output_column, table_column = st.columns([1.1, 1])
                 with output_column:
                     st.image(
@@ -229,18 +370,10 @@ if mode == "Roboflow Hosted Model":
                         use_container_width=True,
                     )
                 with table_column:
-                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                    _render_detection_details(rows, rag_reports, element_result)
+                st.subheader("Detection Summary")
+                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
                 _render_cost_time_charts(rows)
-                st.subheader("RAG Remedy Generation")
-                for index, (defect_name, severity_level, rag_remedy) in enumerate(rag_reports, start=1):
-                    with st.expander(f"{index}. {defect_name} - {severity_level} remedy plan"):
-                        if rag_remedy.used_llm:
-                            st.success(f"Generated with OpenAI model: {rag_remedy.model}")
-                        elif rag_remedy.llm_error:
-                            st.warning(f"OpenAI generation unavailable, showing grounded fallback: {rag_remedy.llm_error}")
-                        st.markdown(rag_remedy.answer)
-                        st.caption("LLM prompt is generated from retrieved context and can be sent to Mistral 7B or another model.")
-                        st.code(rag_remedy.prompt, language="text")
             else:
                 st.warning("No defects returned by the hosted model.")
         except (RoboflowModelError, FileNotFoundError) as error:
@@ -293,7 +426,9 @@ for box in result.boxes:
             "Defect": defect_class.replace("_", " ").title(),
             "Confidence": round(float(box.conf[0].item()), 3),
             "Severity": severity.level,
+            "Severity Score": severity.score,
             "Affected Area %": round(severity.area_ratio * 100, 2),
+            "Detection Source": "Local YOLO",
             "Basis": severity.measured,
             "Standard": severity.standard,
             "Remark": severity.reason,
@@ -314,23 +449,23 @@ for box in result.boxes:
         }
     )
 
+element_result = (
+    classify_element(temporary_path, model="gpt-4o-mini")
+    if classify_structure
+    else {"element": "not classified", "confidence": 0.0}
+)
+_render_analysis_summary(rows, element_result, image_width, image_height)
+
 left, right = st.columns([1.2, 1])
 with left:
     st.image(annotated_image, caption="Detection Output", use_container_width=True)
 with right:
     if rows:
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-        st.subheader("RAG Remedy Generation")
-        for index, (defect_name, severity_level, rag_remedy) in enumerate(rag_reports, start=1):
-            with st.expander(f"{index}. {defect_name} - {severity_level} remedy plan"):
-                if rag_remedy.used_llm:
-                    st.success(f"Generated with OpenAI model: {rag_remedy.model}")
-                elif rag_remedy.llm_error:
-                    st.warning(f"OpenAI generation unavailable, showing grounded fallback: {rag_remedy.llm_error}")
-                st.markdown(rag_remedy.answer)
-                st.caption("LLM prompt is generated from retrieved context and can be sent to Mistral 7B or another model.")
-                st.code(rag_remedy.prompt, language="text")
+        _render_detection_details(rows, rag_reports, element_result)
     else:
         st.warning("No defect detected at the selected confidence threshold.")
 
+if rows:
+    st.subheader("Detection Summary")
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 _render_cost_time_charts(rows)
