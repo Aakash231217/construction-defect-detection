@@ -29,6 +29,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from src.defect_taxonomy import normalise_defect
+
 NORMS_PATH = Path(__file__).resolve().parents[1] / "data" / "repair_norms.json"
 
 
@@ -125,14 +127,7 @@ class BoqEstimate:
 
 
 def _normalise_defect(defect_class: str) -> str:
-    key = defect_class.strip().lower().replace(" ", "_").replace("-", "_")
-    if key in {"exposed_rebar", "rebar", "reinforcement_exposed"}:
-        return "exposed_reinforcement"
-    if key in {"spall", "spalled_concrete"}:
-        return "spalling"
-    if key in {"mould", "dampness", "damp_patch", "moisture"}:
-        return "mold"
-    return key
+    return normalise_defect(defect_class)
 
 
 def load_norms_database(path: Path = NORMS_PATH) -> dict[str, Any]:

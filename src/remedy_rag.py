@@ -23,6 +23,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from src.defect_taxonomy import normalise_defect
+
 
 KNOWLEDGE_PATH = Path(__file__).resolve().parents[1] / "data" / "remedy_knowledge.json"
 
@@ -66,14 +68,7 @@ class RagRemedy:
 
 
 def _normalise_defect(defect_class: str) -> str:
-    key = defect_class.strip().lower().replace(" ", "_").replace("-", "_")
-    if key in {"exposed_rebar", "rebar", "reinforcement_exposed"}:
-        return "exposed_reinforcement"
-    if key in {"spall", "spalled_concrete"}:
-        return "spalling"
-    if key in {"mould", "dampness", "damp_patch", "moisture"}:
-        return "mold"
-    return key
+    return normalise_defect(defect_class)
 
 
 def _severity_key(severity_level: str) -> str:

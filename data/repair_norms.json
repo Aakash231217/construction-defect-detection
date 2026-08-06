@@ -1,226 +1,1181 @@
 {
   "_comment": "RAG norms database: material/labour/equipment NORMS (consumption per unit of work) and UNIT RATES. Sources are CPWD Manual Vol.4 style norms, Sika technical guides, IS 456/IS 1343/IS 13311 intent. Cost is NEVER stored directly; it is always computed as quantity x rate.",
-
   "unit_rates": {
     "_comment": "Base unit rates in INR. These are indicative market/CPWD-style rates and must be updated with current local rates.",
     "labour": [
-      {"item": "skilled_labour", "description": "Skilled labour (mason/technician)", "unit": "man-day", "rate": 850.0},
-      {"item": "helper", "description": "Unskilled helper", "unit": "man-day", "rate": 600.0}
+      {
+        "item": "skilled_labour",
+        "description": "Skilled labour (mason/technician)",
+        "unit": "man-day",
+        "rate": 850.0
+      },
+      {
+        "item": "helper",
+        "description": "Unskilled helper",
+        "unit": "man-day",
+        "rate": 600.0
+      }
     ],
     "materials": [
-      {"item": "epoxy_sealant_paste", "description": "Epoxy paste / PU sealant for crack sealing", "unit": "kg", "rate": 850.0},
-      {"item": "epoxy_injection_low_visc", "description": "Low-viscosity injection epoxy resin", "unit": "litre", "rate": 1100.0},
-      {"item": "epoxy_injection_structural", "description": "Structural-grade injection epoxy", "unit": "litre", "rate": 1800.0},
-      {"item": "polymer_mortar", "description": "Polymer-modified repair mortar", "unit": "kg", "rate": 95.0},
-      {"item": "micro_concrete", "description": "Free-flow micro-concrete", "unit": "kg", "rate": 55.0},
-      {"item": "bonding_agent", "description": "Epoxy bonding agent", "unit": "litre", "rate": 950.0},
-      {"item": "corrosion_inhibitor", "description": "Rust passivator / corrosion-inhibiting coating", "unit": "litre", "rate": 1250.0},
-      {"item": "non_shrink_grout", "description": "Non-shrink cementitious grout", "unit": "kg", "rate": 45.0},
-      {"item": "sealant_consumables", "description": "Sealant ports, packers, consumables", "unit": "lumpsum", "rate": 150.0},
-      {"item": "anti_fungal_wash", "description": "Anti-fungal biocide wash", "unit": "litre", "rate": 420.0},
-      {"item": "waterproof_coating", "description": "Polymer waterproof coating", "unit": "litre", "rate": 380.0},
-      {"item": "cement_plaster_mortar", "description": "Cement/polymer plaster repair mortar", "unit": "kg", "rate": 18.0}
+      {
+        "item": "epoxy_sealant_paste",
+        "description": "Epoxy paste / PU sealant for crack sealing",
+        "unit": "kg",
+        "rate": 850.0
+      },
+      {
+        "item": "epoxy_injection_low_visc",
+        "description": "Low-viscosity injection epoxy resin",
+        "unit": "litre",
+        "rate": 1100.0
+      },
+      {
+        "item": "epoxy_injection_structural",
+        "description": "Structural-grade injection epoxy",
+        "unit": "litre",
+        "rate": 1800.0
+      },
+      {
+        "item": "polymer_mortar",
+        "description": "Polymer-modified repair mortar",
+        "unit": "kg",
+        "rate": 95.0
+      },
+      {
+        "item": "micro_concrete",
+        "description": "Free-flow micro-concrete",
+        "unit": "kg",
+        "rate": 55.0
+      },
+      {
+        "item": "bonding_agent",
+        "description": "Epoxy bonding agent",
+        "unit": "litre",
+        "rate": 950.0
+      },
+      {
+        "item": "corrosion_inhibitor",
+        "description": "Rust passivator / corrosion-inhibiting coating",
+        "unit": "litre",
+        "rate": 1250.0
+      },
+      {
+        "item": "non_shrink_grout",
+        "description": "Non-shrink cementitious grout",
+        "unit": "kg",
+        "rate": 45.0
+      },
+      {
+        "item": "sealant_consumables",
+        "description": "Sealant ports, packers, consumables",
+        "unit": "lumpsum",
+        "rate": 150.0
+      },
+      {
+        "item": "anti_fungal_wash",
+        "description": "Anti-fungal biocide wash",
+        "unit": "litre",
+        "rate": 420.0
+      },
+      {
+        "item": "waterproof_coating",
+        "description": "Polymer waterproof coating",
+        "unit": "litre",
+        "rate": 380.0
+      },
+      {
+        "item": "cement_plaster_mortar",
+        "description": "Cement/polymer plaster repair mortar",
+        "unit": "kg",
+        "rate": 18.0
+      },
+      {
+        "item": "crystalline_waterproof_slurry",
+        "description": "Cementitious crystalline waterproofing slurry",
+        "unit": "kg",
+        "rate": 180.0
+      },
+      {
+        "item": "water_repellent_sealer",
+        "description": "Breathable silane/siloxane water repellent",
+        "unit": "litre",
+        "rate": 550.0
+      },
+      {
+        "item": "salt_neutraliser_wash",
+        "description": "Efflorescence/salt neutralising wash",
+        "unit": "litre",
+        "rate": 280.0
+      },
+      {
+        "item": "pu_injection_resin",
+        "description": "Polyurethane leak-sealing injection resin",
+        "unit": "litre",
+        "rate": 1450.0
+      },
+      {
+        "item": "paint_primer",
+        "description": "Alkali-resistant primer",
+        "unit": "litre",
+        "rate": 280.0
+      },
+      {
+        "item": "emulsion_paint",
+        "description": "Emulsion finish paint",
+        "unit": "litre",
+        "rate": 240.0
+      },
+      {
+        "item": "putty_filler",
+        "description": "Wall putty / surface filler",
+        "unit": "kg",
+        "rate": 28.0
+      },
+      {
+        "item": "repointing_mortar",
+        "description": "Polymer repointing mortar for masonry joints",
+        "unit": "kg",
+        "rate": 22.0
+      },
+      {
+        "item": "helical_stitching_bar",
+        "description": "Helical bed-joint stitching bar",
+        "unit": "metre",
+        "rate": 420.0
+      },
+      {
+        "item": "movement_monitor_telltale",
+        "description": "Tell-tale crack movement monitor gauge",
+        "unit": "nos",
+        "rate": 450.0
+      }
     ],
     "equipment": [
-      {"item": "injection_pump", "description": "Epoxy injection pump", "unit": "day", "rate": 2500.0},
-      {"item": "drilling_machine", "description": "Drilling machine with bits", "unit": "day", "rate": 1200.0},
-      {"item": "grinder_hand_tools", "description": "Grinder and hand tools set", "unit": "day", "rate": 850.0},
-      {"item": "breaker", "description": "Concrete breaker/chipping hammer", "unit": "day", "rate": 1500.0},
-      {"item": "grout_pump", "description": "Pressure grouting pump", "unit": "day", "rate": 2200.0}
+      {
+        "item": "injection_pump",
+        "description": "Epoxy injection pump",
+        "unit": "day",
+        "rate": 2500.0
+      },
+      {
+        "item": "drilling_machine",
+        "description": "Drilling machine with bits",
+        "unit": "day",
+        "rate": 1200.0
+      },
+      {
+        "item": "grinder_hand_tools",
+        "description": "Grinder and hand tools set",
+        "unit": "day",
+        "rate": 850.0
+      },
+      {
+        "item": "breaker",
+        "description": "Concrete breaker/chipping hammer",
+        "unit": "day",
+        "rate": 1500.0
+      },
+      {
+        "item": "grout_pump",
+        "description": "Pressure grouting pump",
+        "unit": "day",
+        "rate": 2200.0
+      },
+      {
+        "item": "pressure_washer",
+        "description": "High-pressure washer",
+        "unit": "day",
+        "rate": 800.0
+      },
+      {
+        "item": "scaffolding_access",
+        "description": "Scaffolding / access platform",
+        "unit": "day",
+        "rate": 900.0
+      },
+      {
+        "item": "cover_meter_survey",
+        "description": "Cover meter + half-cell potential survey kit",
+        "unit": "day",
+        "rate": 3500.0
+      }
     ]
   },
-
   "repair_norms": [
     {
       "id": "crack-minor-sealing",
       "defect": "crack",
-      "severity": ["Minor"],
+      "severity": [
+        "Minor"
+      ],
       "remedy": "Epoxy paste filling / crack sealing",
       "work_unit": "running metre",
       "source": "CPWD Manual Vol.4 style norms / Sika crack-sealing datasheet",
       "materials": [
-        {"item": "epoxy_sealant_paste", "norm": 0.20, "norm_unit": "kg per running metre"},
-        {"item": "sealant_consumables", "norm": 0.20, "norm_unit": "lumpsum per running metre"}
+        {
+          "item": "epoxy_sealant_paste",
+          "norm": 0.2,
+          "norm_unit": "kg per running metre"
+        },
+        {
+          "item": "sealant_consumables",
+          "norm": 0.2,
+          "norm_unit": "lumpsum per running metre"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 0.30, "norm_unit": "man-day per running metre"},
-        {"item": "helper", "norm": 0.30, "norm_unit": "man-day per running metre"}
+        {
+          "item": "skilled_labour",
+          "norm": 0.3,
+          "norm_unit": "man-day per running metre"
+        },
+        {
+          "item": "helper",
+          "norm": 0.3,
+          "norm_unit": "man-day per running metre"
+        }
       ],
       "equipment": [
-        {"item": "grinder_hand_tools", "norm": 0.10, "norm_unit": "day per running metre"}
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.1,
+          "norm_unit": "day per running metre"
+        }
       ],
       "method_steps": "Clean crack line -> open hairline with grinder -> fill/seal with epoxy paste -> smooth and cure."
     },
     {
       "id": "crack-moderate-injection",
       "defect": "crack",
-      "severity": ["Moderate"],
+      "severity": [
+        "Moderate"
+      ],
       "remedy": "Epoxy injection (low viscosity)",
       "work_unit": "running metre",
       "source": "CPWD Manual Vol.4 / Sika injection systems guide",
       "materials": [
-        {"item": "epoxy_injection_low_visc", "norm": 0.35, "norm_unit": "litre per running metre"},
-        {"item": "epoxy_sealant_paste", "norm": 0.15, "norm_unit": "kg per running metre (surface sealing)"},
-        {"item": "sealant_consumables", "norm": 0.50, "norm_unit": "lumpsum per running metre (ports/packers)"}
+        {
+          "item": "epoxy_injection_low_visc",
+          "norm": 0.35,
+          "norm_unit": "litre per running metre"
+        },
+        {
+          "item": "epoxy_sealant_paste",
+          "norm": 0.15,
+          "norm_unit": "kg per running metre (surface sealing)"
+        },
+        {
+          "item": "sealant_consumables",
+          "norm": 0.5,
+          "norm_unit": "lumpsum per running metre (ports/packers)"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 0.60, "norm_unit": "man-day per running metre"},
-        {"item": "helper", "norm": 0.60, "norm_unit": "man-day per running metre"}
+        {
+          "item": "skilled_labour",
+          "norm": 0.6,
+          "norm_unit": "man-day per running metre"
+        },
+        {
+          "item": "helper",
+          "norm": 0.6,
+          "norm_unit": "man-day per running metre"
+        }
       ],
       "equipment": [
-        {"item": "drilling_machine", "norm": 0.20, "norm_unit": "day per running metre"},
-        {"item": "injection_pump", "norm": 0.20, "norm_unit": "day per running metre"}
+        {
+          "item": "drilling_machine",
+          "norm": 0.2,
+          "norm_unit": "day per running metre"
+        },
+        {
+          "item": "injection_pump",
+          "norm": 0.2,
+          "norm_unit": "day per running metre"
+        }
       ],
       "method_steps": "Drill ports at 150-200 mm c/c -> fix packers -> seal crack surface -> inject low-viscosity epoxy until refusal -> remove ports, seal and finish."
     },
     {
       "id": "crack-severe-structural-injection",
       "defect": "crack",
-      "severity": ["Severe", "Critical"],
+      "severity": [
+        "Severe",
+        "Critical"
+      ],
       "remedy": "Structural-grade epoxy injection + surface protection (engineer supervised)",
       "work_unit": "running metre",
       "source": "ACI 562 / CPWD Manual Vol.4 / Sika structural injection guide",
       "materials": [
-        {"item": "epoxy_injection_structural", "norm": 0.55, "norm_unit": "litre per running metre"},
-        {"item": "epoxy_sealant_paste", "norm": 0.20, "norm_unit": "kg per running metre"},
-        {"item": "sealant_consumables", "norm": 0.80, "norm_unit": "lumpsum per running metre"}
+        {
+          "item": "epoxy_injection_structural",
+          "norm": 0.55,
+          "norm_unit": "litre per running metre"
+        },
+        {
+          "item": "epoxy_sealant_paste",
+          "norm": 0.2,
+          "norm_unit": "kg per running metre"
+        },
+        {
+          "item": "sealant_consumables",
+          "norm": 0.8,
+          "norm_unit": "lumpsum per running metre"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 1.20, "norm_unit": "man-day per running metre"},
-        {"item": "helper", "norm": 1.20, "norm_unit": "man-day per running metre"}
+        {
+          "item": "skilled_labour",
+          "norm": 1.2,
+          "norm_unit": "man-day per running metre"
+        },
+        {
+          "item": "helper",
+          "norm": 1.2,
+          "norm_unit": "man-day per running metre"
+        }
       ],
       "equipment": [
-        {"item": "injection_pump", "norm": 0.30, "norm_unit": "day per running metre"},
-        {"item": "drilling_machine", "norm": 0.30, "norm_unit": "day per running metre"}
+        {
+          "item": "injection_pump",
+          "norm": 0.3,
+          "norm_unit": "day per running metre"
+        },
+        {
+          "item": "drilling_machine",
+          "norm": 0.3,
+          "norm_unit": "day per running metre"
+        }
       ],
       "method_steps": "Drill ports at 100-150 mm c/c -> inject structural-grade epoxy -> apply surface protection coating -> engineer inspection before and after."
     },
     {
       "id": "spalling-minor-moderate-patch",
       "defect": "spalling",
-      "severity": ["Minor", "Moderate"],
+      "severity": [
+        "Minor",
+        "Moderate"
+      ],
       "remedy": "Polymer-modified mortar patch repair",
       "work_unit": "sq m",
       "source": "ICRI 310.1 / CPWD Manual Vol.4 patch-repair norms",
       "materials": [
-        {"item": "polymer_mortar", "norm": 22.0, "norm_unit": "kg per sq m (approx 10 mm thickness)"},
-        {"item": "bonding_agent", "norm": 0.25, "norm_unit": "litre per sq m"}
+        {
+          "item": "polymer_mortar",
+          "norm": 22.0,
+          "norm_unit": "kg per sq m (approx 10 mm thickness)"
+        },
+        {
+          "item": "bonding_agent",
+          "norm": 0.25,
+          "norm_unit": "litre per sq m"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 0.50, "norm_unit": "man-day per sq m"},
-        {"item": "helper", "norm": 0.50, "norm_unit": "man-day per sq m"}
+        {
+          "item": "skilled_labour",
+          "norm": 0.5,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.5,
+          "norm_unit": "man-day per sq m"
+        }
       ],
       "equipment": [
-        {"item": "grinder_hand_tools", "norm": 0.15, "norm_unit": "day per sq m"}
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.15,
+          "norm_unit": "day per sq m"
+        }
       ],
       "method_steps": "Remove loose concrete -> clean substrate -> apply bonding agent -> build up polymer mortar in layers -> cure."
     },
     {
       "id": "spalling-severe-microconcrete",
       "defect": "spalling",
-      "severity": ["Severe", "Critical"],
+      "severity": [
+        "Severe",
+        "Critical"
+      ],
       "remedy": "Break-out and micro-concrete section reinstatement with steel treatment",
       "work_unit": "sq m",
       "source": "ICRI 310.1 / ACI 562 / CPWD micro-concrete norms",
       "materials": [
-        {"item": "micro_concrete", "norm": 90.0, "norm_unit": "kg per sq m (approx 40 mm depth)"},
-        {"item": "bonding_agent", "norm": 0.30, "norm_unit": "litre per sq m"},
-        {"item": "corrosion_inhibitor", "norm": 0.20, "norm_unit": "litre per sq m"}
+        {
+          "item": "micro_concrete",
+          "norm": 90.0,
+          "norm_unit": "kg per sq m (approx 40 mm depth)"
+        },
+        {
+          "item": "bonding_agent",
+          "norm": 0.3,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "corrosion_inhibitor",
+          "norm": 0.2,
+          "norm_unit": "litre per sq m"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 1.00, "norm_unit": "man-day per sq m"},
-        {"item": "helper", "norm": 1.20, "norm_unit": "man-day per sq m"}
+        {
+          "item": "skilled_labour",
+          "norm": 1.0,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 1.2,
+          "norm_unit": "man-day per sq m"
+        }
       ],
       "equipment": [
-        {"item": "breaker", "norm": 0.30, "norm_unit": "day per sq m"},
-        {"item": "grinder_hand_tools", "norm": 0.20, "norm_unit": "day per sq m"}
+        {
+          "item": "breaker",
+          "norm": 0.3,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.2,
+          "norm_unit": "day per sq m"
+        }
       ],
       "method_steps": "Break out unsound concrete to sound substrate -> clean/passivate steel -> apply bonding agent -> shutter and pour micro-concrete -> cure -> engineer check."
     },
     {
       "id": "honeycombing-minor-moderate-grout",
       "defect": "honeycombing",
-      "severity": ["Minor", "Moderate"],
+      "severity": [
+        "Minor",
+        "Moderate"
+      ],
       "remedy": "Chip weak concrete and fill with non-shrink grout/mortar",
       "work_unit": "sq m",
       "source": "IS 456 Cl.12 / ACI 309 / CPWD grouting norms",
       "materials": [
-        {"item": "non_shrink_grout", "norm": 25.0, "norm_unit": "kg per sq m"},
-        {"item": "bonding_agent", "norm": 0.20, "norm_unit": "litre per sq m"}
+        {
+          "item": "non_shrink_grout",
+          "norm": 25.0,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "bonding_agent",
+          "norm": 0.2,
+          "norm_unit": "litre per sq m"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 0.40, "norm_unit": "man-day per sq m"},
-        {"item": "helper", "norm": 0.40, "norm_unit": "man-day per sq m"}
+        {
+          "item": "skilled_labour",
+          "norm": 0.4,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.4,
+          "norm_unit": "man-day per sq m"
+        }
       ],
       "equipment": [
-        {"item": "grinder_hand_tools", "norm": 0.15, "norm_unit": "day per sq m"}
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.15,
+          "norm_unit": "day per sq m"
+        }
       ],
       "method_steps": "Chip loose/weak concrete -> clean voids -> apply bonding agent -> fill non-shrink grout -> finish surface."
     },
     {
       "id": "honeycombing-severe-pressure-grout",
       "defect": "honeycombing",
-      "severity": ["Severe", "Critical"],
+      "severity": [
+        "Severe",
+        "Critical"
+      ],
       "remedy": "Pressure grouting of deep voids + micro-concrete rebuild",
       "work_unit": "sq m",
       "source": "IS 456 / ACI 309 / CPWD pressure-grouting norms",
       "materials": [
-        {"item": "non_shrink_grout", "norm": 40.0, "norm_unit": "kg per sq m"},
-        {"item": "micro_concrete", "norm": 60.0, "norm_unit": "kg per sq m"},
-        {"item": "bonding_agent", "norm": 0.25, "norm_unit": "litre per sq m"}
+        {
+          "item": "non_shrink_grout",
+          "norm": 40.0,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "micro_concrete",
+          "norm": 60.0,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "bonding_agent",
+          "norm": 0.25,
+          "norm_unit": "litre per sq m"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 0.90, "norm_unit": "man-day per sq m"},
-        {"item": "helper", "norm": 1.00, "norm_unit": "man-day per sq m"}
+        {
+          "item": "skilled_labour",
+          "norm": 0.9,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 1.0,
+          "norm_unit": "man-day per sq m"
+        }
       ],
       "equipment": [
-        {"item": "grout_pump", "norm": 0.30, "norm_unit": "day per sq m"},
-        {"item": "breaker", "norm": 0.20, "norm_unit": "day per sq m"}
+        {
+          "item": "grout_pump",
+          "norm": 0.3,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "breaker",
+          "norm": 0.2,
+          "norm_unit": "day per sq m"
+        }
       ],
       "method_steps": "Remove defective concrete -> drill grout ports -> pressure-grout voids -> rebuild section with micro-concrete -> cure and verify."
     },
     {
       "id": "rebar-severe-cover-restoration",
       "defect": "exposed_reinforcement",
-      "severity": ["Severe", "Critical"],
+      "severity": [
+        "Severe",
+        "Critical"
+      ],
       "remedy": "Steel cleaning/passivation + polymer mortar cover restoration",
       "work_unit": "sq m",
       "source": "ICRI 310.1 / ACI 562 / manufacturer passivator datasheets",
       "materials": [
-        {"item": "corrosion_inhibitor", "norm": 0.35, "norm_unit": "litre per sq m"},
-        {"item": "polymer_mortar", "norm": 35.0, "norm_unit": "kg per sq m (cover build-up)"},
-        {"item": "bonding_agent", "norm": 0.30, "norm_unit": "litre per sq m"}
+        {
+          "item": "corrosion_inhibitor",
+          "norm": 0.35,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "polymer_mortar",
+          "norm": 35.0,
+          "norm_unit": "kg per sq m (cover build-up)"
+        },
+        {
+          "item": "bonding_agent",
+          "norm": 0.3,
+          "norm_unit": "litre per sq m"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 1.00, "norm_unit": "man-day per sq m"},
-        {"item": "helper", "norm": 1.00, "norm_unit": "man-day per sq m"}
+        {
+          "item": "skilled_labour",
+          "norm": 1.0,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 1.0,
+          "norm_unit": "man-day per sq m"
+        }
       ],
       "equipment": [
-        {"item": "breaker", "norm": 0.25, "norm_unit": "day per sq m"},
-        {"item": "grinder_hand_tools", "norm": 0.25, "norm_unit": "day per sq m"}
+        {
+          "item": "breaker",
+          "norm": 0.25,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.25,
+          "norm_unit": "day per sq m"
+        }
       ],
       "method_steps": "Break out around bars -> wire-brush/clean steel -> apply corrosion inhibitor -> bonding agent -> restore cover with polymer mortar -> cure."
     },
     {
       "id": "mold-dampness-treatment",
       "defect": "mold",
-      "severity": ["Minor", "Moderate", "Severe", "Critical"],
+      "severity": [
+        "Minor",
+        "Moderate",
+        "Severe",
+        "Critical"
+      ],
       "remedy": "Anti-fungal cleaning, dampness source treatment, waterproof coating and local replastering",
       "work_unit": "sq m",
       "source": "Building maintenance practice / CPWD-style waterproofing and plaster repair norms",
       "materials": [
-        {"item": "anti_fungal_wash", "norm": 0.15, "norm_unit": "litre per sq m"},
-        {"item": "waterproof_coating", "norm": 0.40, "norm_unit": "litre per sq m (two coats)"},
-        {"item": "cement_plaster_mortar", "norm": 18.0, "norm_unit": "kg per sq m (local replastering)"}
+        {
+          "item": "anti_fungal_wash",
+          "norm": 0.15,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "waterproof_coating",
+          "norm": 0.4,
+          "norm_unit": "litre per sq m (two coats)"
+        },
+        {
+          "item": "cement_plaster_mortar",
+          "norm": 18.0,
+          "norm_unit": "kg per sq m (local replastering)"
+        }
       ],
       "labour": [
-        {"item": "skilled_labour", "norm": 0.45, "norm_unit": "man-day per sq m"},
-        {"item": "helper", "norm": 0.45, "norm_unit": "man-day per sq m"}
+        {
+          "item": "skilled_labour",
+          "norm": 0.45,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.45,
+          "norm_unit": "man-day per sq m"
+        }
       ],
       "equipment": [
-        {"item": "grinder_hand_tools", "norm": 0.10, "norm_unit": "day per sq m"}
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.1,
+          "norm_unit": "day per sq m"
+        }
       ],
       "method_steps": "Identify and stop dampness source -> scrape loose/contaminated plaster -> apply anti-fungal wash -> dry surface -> apply waterproof coating -> replaster/finish affected area."
+    },
+    {
+      "id": "efflorescence-minor",
+      "defect": "efflorescence",
+      "severity": [
+        "Minor",
+        "Negligible"
+      ],
+      "remedy": "Salt removal and breathable water-repellent treatment",
+      "work_unit": "sq m",
+      "source": "IS 456:2000 Cl. 8 (durability) / manufacturer datasheet consumption",
+      "materials": [
+        {
+          "item": "salt_neutraliser_wash",
+          "norm": 0.15,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "water_repellent_sealer",
+          "norm": 0.12,
+          "norm_unit": "litre per sq m"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.05,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.08,
+          "norm_unit": "man-day per sq m"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.02,
+          "norm_unit": "day per sq m"
+        }
+      ],
+      "method_steps": "Dry-brush salt deposits -> neutralising wash -> allow surface to dry -> apply breathable water repellent -> trace and record the moisture path."
+    },
+    {
+      "id": "efflorescence-moderate",
+      "defect": "efflorescence",
+      "severity": [
+        "Moderate"
+      ],
+      "remedy": "Salt removal plus crystalline waterproofing of the moisture path",
+      "work_unit": "sq m",
+      "source": "IS 456:2000 Cl. 8 / BS 8102 intent / manufacturer datasheet consumption",
+      "materials": [
+        {
+          "item": "salt_neutraliser_wash",
+          "norm": 0.2,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "crystalline_waterproof_slurry",
+          "norm": 1.2,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "water_repellent_sealer",
+          "norm": 0.2,
+          "norm_unit": "litre per sq m"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.12,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.15,
+          "norm_unit": "man-day per sq m"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "pressure_washer",
+          "norm": 0.05,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.04,
+          "norm_unit": "day per sq m"
+        }
+      ],
+      "method_steps": "Pressure-wash and neutralise salts -> identify water entry point -> apply crystalline waterproofing slurry in two coats -> cure -> finish with breathable repellent. Treating the face alone will not stop recurrence."
+    },
+    {
+      "id": "water-seepage-minor-moderate",
+      "defect": "water_seepage",
+      "severity": [
+        "Negligible",
+        "Minor",
+        "Moderate"
+      ],
+      "remedy": "Leak-path sealing and crystalline waterproofing",
+      "work_unit": "sq m",
+      "source": "BS 8102 / CPWD waterproofing specification style norms",
+      "materials": [
+        {
+          "item": "crystalline_waterproof_slurry",
+          "norm": 1.5,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "waterproof_coating",
+          "norm": 0.6,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "cement_plaster_mortar",
+          "norm": 3.0,
+          "norm_unit": "kg per sq m"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.15,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.18,
+          "norm_unit": "man-day per sq m"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.05,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "pressure_washer",
+          "norm": 0.04,
+          "norm_unit": "day per sq m"
+        }
+      ],
+      "method_steps": "Trace the leak to source -> hack damp plaster back to sound substrate -> seal entry point -> crystalline slurry two coats -> re-plaster -> waterproof top coat."
+    },
+    {
+      "id": "water-seepage-severe",
+      "defect": "water_seepage",
+      "severity": [
+        "Severe",
+        "Critical"
+      ],
+      "remedy": "PU injection grouting of the leak path plus full waterproofing system",
+      "work_unit": "sq m",
+      "source": "BS 8102 / injection-grouting manufacturer datasheet consumption",
+      "materials": [
+        {
+          "item": "pu_injection_resin",
+          "norm": 0.6,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "crystalline_waterproof_slurry",
+          "norm": 2.5,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "waterproof_coating",
+          "norm": 0.8,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "sealant_consumables",
+          "norm": 0.5,
+          "norm_unit": "lumpsum per sq m"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.35,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.35,
+          "norm_unit": "man-day per sq m"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "injection_pump",
+          "norm": 0.12,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "drilling_machine",
+          "norm": 0.1,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "scaffolding_access",
+          "norm": 0.15,
+          "norm_unit": "day per sq m"
+        }
+      ],
+      "method_steps": "Drill injection ports along the leak path -> inject PU resin until the flow stops -> remove packers and make good -> crystalline slurry -> waterproof membrane. Persistent seepage needs drainage review by an engineer; that is a separate item."
+    },
+    {
+      "id": "peeling-paint-minor",
+      "defect": "peeling_paint",
+      "severity": [
+        "Negligible",
+        "Minor"
+      ],
+      "remedy": "Local scrape, spot prime and touch-up",
+      "work_unit": "sq m",
+      "source": "CPWD painting schedule style norms / paint datasheet coverage",
+      "materials": [
+        {
+          "item": "putty_filler",
+          "norm": 0.5,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "paint_primer",
+          "norm": 0.08,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "emulsion_paint",
+          "norm": 0.15,
+          "norm_unit": "litre per sq m"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.02,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.03,
+          "norm_unit": "man-day per sq m"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.01,
+          "norm_unit": "day per sq m"
+        }
+      ],
+      "method_steps": "Scrape loose flakes -> sand feather edges -> putty and sand -> spot prime -> touch up to match existing finish."
+    },
+    {
+      "id": "peeling-paint-moderate",
+      "defect": "peeling_paint",
+      "severity": [
+        "Moderate",
+        "Severe",
+        "Critical"
+      ],
+      "remedy": "Full scrape to substrate, dampness treatment and repaint",
+      "work_unit": "sq m",
+      "source": "CPWD painting schedule style norms / paint datasheet coverage",
+      "materials": [
+        {
+          "item": "putty_filler",
+          "norm": 1.2,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "paint_primer",
+          "norm": 0.15,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "emulsion_paint",
+          "norm": 0.35,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "anti_fungal_wash",
+          "norm": 0.1,
+          "norm_unit": "litre per sq m"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.06,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.08,
+          "norm_unit": "man-day per sq m"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.02,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "scaffolding_access",
+          "norm": 0.03,
+          "norm_unit": "day per sq m"
+        }
+      ],
+      "method_steps": "Scrape back to sound substrate -> anti-fungal wash -> allow to dry -> putty and sand -> alkali-resistant primer -> two finish coats. Repainting over a damp substrate will fail again; treat the moisture source first as a separate item."
+    },
+    {
+      "id": "rust-staining-minor",
+      "defect": "rust_staining",
+      "severity": [
+        "Negligible",
+        "Minor"
+      ],
+      "remedy": "Stain cleaning and monitoring record",
+      "work_unit": "sq m",
+      "source": "ICRI 310.1 (corrosion indicators) / inspection practice",
+      "materials": [
+        {
+          "item": "salt_neutraliser_wash",
+          "norm": 0.1,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "water_repellent_sealer",
+          "norm": 0.1,
+          "norm_unit": "litre per sq m"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.04,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.05,
+          "norm_unit": "man-day per sq m"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.02,
+          "norm_unit": "day per sq m"
+        }
+      ],
+      "method_steps": "Clean the stain -> photograph and log location -> apply repellent -> re-inspect at the next cycle. Staining without spalling means the steel is corroding behind intact cover: record it, do not just paint over it."
+    },
+    {
+      "id": "rust-staining-moderate",
+      "defect": "rust_staining",
+      "severity": [
+        "Moderate",
+        "Severe",
+        "Critical"
+      ],
+      "remedy": "Cover-meter / half-cell survey and localised corrosion treatment",
+      "work_unit": "sq m",
+      "source": "ICRI 310.1 / IS 456:2000 Cl. 8 / RILEM half-cell practice",
+      "materials": [
+        {
+          "item": "corrosion_inhibitor",
+          "norm": 0.15,
+          "norm_unit": "litre per sq m"
+        },
+        {
+          "item": "cement_plaster_mortar",
+          "norm": 2.0,
+          "norm_unit": "kg per sq m"
+        },
+        {
+          "item": "water_repellent_sealer",
+          "norm": 0.15,
+          "norm_unit": "litre per sq m"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.2,
+          "norm_unit": "man-day per sq m"
+        },
+        {
+          "item": "helper",
+          "norm": 0.15,
+          "norm_unit": "man-day per sq m"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "cover_meter_survey",
+          "norm": 0.1,
+          "norm_unit": "day per sq m"
+        },
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.03,
+          "norm_unit": "day per sq m"
+        }
+      ],
+      "method_steps": "Cover meter to locate bars and measure cover -> half-cell potential mapping to find active corrosion -> apply migrating corrosion inhibitor -> make good and seal. If the survey finds section loss, re-grade the area as exposed reinforcement and use that repair item instead."
+    },
+    {
+      "id": "stairstep-crack-moderate",
+      "defect": "stairstep_crack",
+      "severity": [
+        "Negligible",
+        "Minor",
+        "Moderate"
+      ],
+      "remedy": "Movement monitoring and bed-joint repointing",
+      "work_unit": "running metre",
+      "source": "BRE Digest 251 (assessment of cracking) / CPWD repointing norms",
+      "materials": [
+        {
+          "item": "repointing_mortar",
+          "norm": 8.0,
+          "norm_unit": "kg per running metre"
+        },
+        {
+          "item": "movement_monitor_telltale",
+          "norm": 0.3,
+          "norm_unit": "nos per running metre"
+        },
+        {
+          "item": "sealant_consumables",
+          "norm": 0.15,
+          "norm_unit": "lumpsum per running metre"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.35,
+          "norm_unit": "man-day per running metre"
+        },
+        {
+          "item": "helper",
+          "norm": 0.35,
+          "norm_unit": "man-day per running metre"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.15,
+          "norm_unit": "day per running metre"
+        },
+        {
+          "item": "scaffolding_access",
+          "norm": 0.1,
+          "norm_unit": "day per running metre"
+        }
+      ],
+      "method_steps": "Fit tell-tales and monitor for at least one seasonal cycle -> confirm movement has stopped -> rake out cracked bed joints to 15-20 mm -> repoint with polymer mortar -> re-inspect. Repointing a still-moving crack will simply crack again."
+    },
+    {
+      "id": "stairstep-crack-severe-critical",
+      "defect": "stairstep_crack",
+      "severity": [
+        "Severe",
+        "Critical"
+      ],
+      "remedy": "Helical bed-joint stitching plus repointing (fabric repair only)",
+      "work_unit": "running metre",
+      "source": "BRE Digest 251 / helical stitching manufacturer specification",
+      "materials": [
+        {
+          "item": "helical_stitching_bar",
+          "norm": 1.1,
+          "norm_unit": "metre per running metre"
+        },
+        {
+          "item": "repointing_mortar",
+          "norm": 10.0,
+          "norm_unit": "kg per running metre"
+        },
+        {
+          "item": "epoxy_sealant_paste",
+          "norm": 0.4,
+          "norm_unit": "kg per running metre"
+        },
+        {
+          "item": "movement_monitor_telltale",
+          "norm": 0.4,
+          "norm_unit": "nos per running metre"
+        }
+      ],
+      "labour": [
+        {
+          "item": "skilled_labour",
+          "norm": 0.65,
+          "norm_unit": "man-day per running metre"
+        },
+        {
+          "item": "helper",
+          "norm": 0.55,
+          "norm_unit": "man-day per running metre"
+        }
+      ],
+      "equipment": [
+        {
+          "item": "drilling_machine",
+          "norm": 0.25,
+          "norm_unit": "day per running metre"
+        },
+        {
+          "item": "grinder_hand_tools",
+          "norm": 0.2,
+          "norm_unit": "day per running metre"
+        },
+        {
+          "item": "scaffolding_access",
+          "norm": 0.2,
+          "norm_unit": "day per running metre"
+        }
+      ],
+      "method_steps": "Investigate the settlement cause first -> cut slots in bed joints at 450 mm centres -> bed helical bars in grout -> repoint -> monitor. IMPORTANT: this rate covers the masonry fabric repair only. Foundation underpinning or drainage correction is a separate engineer-designed item and is NOT included in this quantity."
     }
   ]
 }

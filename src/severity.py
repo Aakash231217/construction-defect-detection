@@ -35,6 +35,7 @@ from typing import Any
 
 from src.boq import BoqEstimate, compute_boq
 from src.cost_estimation import CostEstimate, estimate_repair_cost
+from src.defect_taxonomy import normalise_defect
 
 
 class Severity(IntEnum):
@@ -182,7 +183,122 @@ REMEDIATION_GUIDE: dict[str, dict[Severity, RemediationEstimate]] = {
             "1-3 weeks or more",
         ),
     },
+    "stairstep_crack": {
+        Severity.MODERATE: RemediationEstimate(
+            "Install tell-tales and monitor movement; rake out and repoint mortar joints once movement is stable.",
+            "INR 600-1,500 per running metre",
+            "1-3 days",
+        ),
+        Severity.SEVERE: RemediationEstimate(
+            "Investigate differential settlement; helical bed-joint stitching plus repointing after cause is treated.",
+            "INR 1,500-4,000 per running metre",
+            "3-7 days",
+        ),
+        Severity.CRITICAL: RemediationEstimate(
+            "Foundation investigation and underpinning design before any fabric repair; monitor until movement stops.",
+            "Engineer estimate required; often INR 5,000+ per running metre",
+            "2-6 weeks or more",
+        ),
+    },
+    "efflorescence": {
+        Severity.MINOR: RemediationEstimate(
+            "Dry-brush salt deposits, identify the moisture path and apply a breathable water repellent.",
+            "INR 120-300 per sq m",
+            "Same day",
+        ),
+        Severity.MODERATE: RemediationEstimate(
+            "Remove salts, trace and stop the water ingress at source, then apply crystalline waterproofing.",
+            "INR 350-900 per sq m",
+            "1-3 days",
+        ),
+    },
+    "water_seepage": {
+        Severity.MINOR: RemediationEstimate(
+            "Trace the source, seal the local entry point and apply surface waterproof coating.",
+            "INR 250-600 per sq m",
+            "Same day to 1 day",
+        ),
+        Severity.MODERATE: RemediationEstimate(
+            "Cementitious crystalline waterproofing after tracing and sealing the leak path.",
+            "INR 600-1,500 per sq m",
+            "1-3 days",
+        ),
+        Severity.SEVERE: RemediationEstimate(
+            "Injection grouting of the leak path plus a full waterproofing system; engineer input on drainage.",
+            "INR 1,500-4,000 per sq m",
+            "3-7 days",
+        ),
+    },
+    "peeling_paint": {
+        Severity.MINOR: RemediationEstimate(
+            "Scrape loose paint, spot-prime and touch up the affected patch.",
+            "INR 60-150 per sq m",
+            "Same day",
+        ),
+        Severity.MODERATE: RemediationEstimate(
+            "Scrape back to sound substrate, treat the underlying dampness, then primer plus two finish coats.",
+            "INR 150-400 per sq m",
+            "1-3 days",
+        ),
+    },
+    "rust_staining": {
+        Severity.MINOR: RemediationEstimate(
+            "Clean the stain and record it; check cover depth at the next inspection cycle.",
+            "INR 100-250 per sq m",
+            "Same day",
+        ),
+        Severity.MODERATE: RemediationEstimate(
+            "Cover-meter / half-cell survey to locate the corroding steel before any cosmetic treatment.",
+            "INR 400-1,200 per sq m (including survey)",
+            "1-3 days",
+        ),
+    },
 }
+
+
+# ---------------------------------------------------------------------------
+# Condition-state limits by defect type
+# ---------------------------------------------------------------------------
+# Non-structural defects signal a durability or finish problem, not loss of
+# section. Without a cap a large stain would be graded "Critical" purely on
+# surface extent, which inflates the critical count and the repair budget.
+SEVERITY_CAP: dict[str, Severity] = {
+    "efflorescence": Severity.MODERATE,
+    "peeling_paint": Severity.MODERATE,
+    "rust_staining": Severity.MODERATE,
+    "water_seepage": Severity.SEVERE,
+}
+
+# Defects that are diagnostic of a structural cause carry a minimum grade even
+# when the visible patch is small: a stepped crack through masonry bed joints
+# indicates differential settlement regardless of how short it is.
+SEVERITY_FLOOR: dict[str, Severity] = {
+    "stairstep_crack": Severity.MODERATE,
+}
+
+# Classes graded by crack width (ACI 224R / IS 456) when a scale is available.
+CRACK_FAMILY = frozenset({"crack", "stairstep_crack"})
+
+
+def _apply_limits(defect_key: str, severity: Severity) -> tuple[Severity, str]:
+    """Clamp a grade to the defect type's condition-state limits.
+
+    Returns the adjusted severity and a note explaining any adjustment (empty
+    when the grade was already within limits).
+    """
+    floor = SEVERITY_FLOOR.get(defect_key)
+    if floor is not None and severity < floor:
+        return floor, (
+            f" Graded at least {floor.label} because this defect type indicates a "
+            "structural cause regardless of the visible extent."
+        )
+    cap = SEVERITY_CAP.get(defect_key)
+    if cap is not None and severity > cap:
+        return cap, (
+            f" Capped at {cap.label}: this is a durability/finish defect, not loss "
+            "of section. Grade the underlying cause separately if present."
+        )
+    return severity, ""
 
 
 @dataclass(frozen=True)
@@ -244,24 +360,25 @@ DEFECT_AREA_BANDS: dict[str, tuple[float, float, float]] = {
     "honeycombing": (0.015, 0.06, 0.15),
     "exposed_reinforcement": (0.01, 0.05, 0.12),
     "mold": (0.02, 0.08, 0.20),
+    # Stepped masonry cracking: settlement indicator, so graded conservatively.
+    "stairstep_crack": (0.01, 0.04, 0.12),
+    # Surface staining needs to be extensive before it changes the condition
+    # state, because the deposit itself carries no load.
+    "efflorescence": (0.03, 0.12, 0.30),
+    "peeling_paint": (0.05, 0.20, 0.40),
+    "water_seepage": (0.02, 0.08, 0.20),
+    # A small rust stain already implies steel is corroding behind the cover.
+    "rust_staining": (0.01, 0.04, 0.10),
 }
 DEFAULT_AREA_BANDS = (MINOR_AREA_RATIO, MODERATE_AREA_RATIO, 0.20)
 
 
 def _normalise(defect_class: str) -> str:
-    key = defect_class.strip().lower().replace(" ", "_")
-    if key in {"spall", "spalled_concrete"}:
-        return "spalling"
-    if key in {"mould", "dampness", "damp_patch", "moisture"}:
-        return "mold"
-    return key
+    return normalise_defect(defect_class)
 
 
 def _remediation_key(defect_class: str) -> str:
-    key = _normalise(defect_class)
-    if key in {"exposed_rebar", "rebar"}:
-        return "exposed_reinforcement"
-    return key
+    return normalise_defect(defect_class)
 
 
 def estimate_remediation(defect_class: str, severity: Severity) -> RemediationEstimate:
@@ -463,7 +580,7 @@ def estimate_severity(
     measured = "area-ratio (no scale reference; approximate)"
     standard = "Area-ratio heuristic"
 
-    if key in {"exposed_reinforcement", "exposed_rebar", "rebar"}:
+    if key == "exposed_reinforcement":
         severity, reason, standard = _grade_exposed_reinforcement(area_ratio)
 
     elif key == "spalling":
@@ -476,7 +593,7 @@ def estimate_severity(
         if depth_mm is not None:
             measured = f"depth {depth_mm:.0f} mm + area-ratio"
 
-    elif key == "crack" and mm_per_pixel:
+    elif key in CRACK_FAMILY and mm_per_pixel:
         dims = estimate_crack_dimensions(box_width, box_height, mm_per_pixel)
         severity = _grade_crack_width(dims.width_mm)
         reason = (
@@ -487,12 +604,51 @@ def estimate_severity(
         standard = "ACI 224R-01 / IS 456:2000 Cl. 35.3.2"
         measured = f"width {dims.width_mm:.2f} mm (scaled)"
 
+    elif key == "rust_staining":
+        severity = _grade_from_area(key, area_ratio)
+        reason = (
+            f"Rust/corrosion staining over ~{area_ratio * 100:.1f}% of the surface. "
+            "Staining is leachate from reinforcement already corroding behind intact "
+            "cover: an early-warning indicator, not yet section loss."
+        )
+        standard = "ICRI 310.1 (corrosion indicators) / IS 456:2000 Cl. 8"
+
+    elif key == "efflorescence":
+        severity = _grade_from_area(key, area_ratio)
+        reason = (
+            f"Efflorescence (salt/lime leaching) over ~{area_ratio * 100:.1f}% of the "
+            "surface. Indicates water moving through the concrete and evaporating at "
+            "the face; a durability and moisture-path issue."
+        )
+        standard = "IS 456:2000 Cl. 8 (durability) / BS 8102 intent"
+
+    elif key == "water_seepage":
+        severity = _grade_from_area(key, area_ratio)
+        reason = (
+            f"Active water seepage/damp patch over ~{area_ratio * 100:.1f}% of the "
+            "surface. Sustained moisture drives corrosion of embedded steel and "
+            "supports mould growth; treat the source, not just the face."
+        )
+        standard = "IS 456:2000 Cl. 8 / BS 8102 (water-resisting construction)"
+
+    elif key == "peeling_paint":
+        severity = _grade_from_area(key, area_ratio)
+        reason = (
+            f"Paint/finish delamination over ~{area_ratio * 100:.1f}% of the surface. "
+            "A finish defect with no structural significance, though it commonly "
+            "signals dampness in the substrate."
+        )
+        standard = "Finish/serviceability (non-structural)"
+
     else:
         severity = _grade_from_area(defect_class, area_ratio)
         reason = (
             f"{defect_name.capitalize()} covering ~{area_ratio * 100:.1f}% of the "
             f"captured surface ({severity.label.lower()} by surface extent)."
         )
+
+    severity, limit_note = _apply_limits(key, severity)
+    reason += limit_note
 
     remediation = estimate_remediation(defect_class, severity)
 
@@ -513,7 +669,7 @@ def estimate_severity(
     # The BOQ work quantity must match the norms' work unit: running metre for
     # cracks, surface area (sq m) for spalling/honeycombing/exposed steel.  The
     # cost module may express deep repairs in cum, so recompute the area here.
-    if _remediation_key(defect_class) == "crack":
+    if key in CRACK_FAMILY:
         boq_work_quantity = cost_estimate.quantity.value  # running metre
     elif mm_per_pixel:
         boq_work_quantity = (box_width * mm_per_pixel) * (box_height * mm_per_pixel) / 1_000_000.0
@@ -528,6 +684,23 @@ def estimate_severity(
     display_rate = display_cost_breakup["composite_rate"]
     display_total = display_cost_breakup["total_cost"]
 
+    # Only claim a "BOQ total" when the norms database actually backed it. Without
+    # a norms record the figure is a rate-table estimate with no overheads/GST, so
+    # labelling it as a BOQ would overstate how the number was derived.
+    if boq.norms_found:
+        cost_line = (
+            f"BOQ total: INR {display_total:.0f} | "
+            f"Final rate: INR {display_rate:.0f}/{display_cost_breakup['quantity_unit']} "
+            f"(includes overheads and GST)"
+        )
+    else:
+        cost_line = (
+            f"Indicative estimate: INR {display_total:.0f} | "
+            f"Rate: INR {display_rate:.0f}/{display_cost_breakup['quantity_unit']} "
+            f"(no norms record for this defect; excludes overheads and GST -- "
+            f"engineer estimate required)"
+        )
+
     return SeverityResult(
         level=severity.label,
         reason=reason,
@@ -537,11 +710,7 @@ def estimate_severity(
         recommended_action=RECOMMENDED_ACTION[severity],
         measured=measured,
         remedial_measure=remediation.remedial_measure,
-        repair_cost_estimate=(
-            f"BOQ total: INR {display_total:.0f} | "
-            f"Final rate: INR {display_rate:.0f}/{display_cost_breakup['quantity_unit']} "
-            f"(includes overheads and GST)"
-        ),
+        repair_cost_estimate=cost_line,
         repair_time_estimate=remediation.repair_time_estimate,
         cost_estimate=cost_estimate,
         cost_breakup=display_cost_breakup,

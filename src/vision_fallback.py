@@ -1,12 +1,13 @@
 """GPT-4o vision fallback detector.
 
-The primary detector is the Roboflow model. Its training set only covers a few
-classes (crack, spalling, mould), so it returns nothing on defects such as
-exposed reinforcement or efflorescence / white bleeding. For those images we run
-a second-pass detection with a GPT vision model, which identifies the defect and
-an approximate bounding box. Results are returned in the SAME shape as the
-Roboflow predictions (centre-based x, y, width, height in pixels) so the rest of
-the pipeline (severity grading, annotation, reporting) is unchanged.
+The primary detector is the Roboflow model, whose training set does not cover
+every class the severity and BOQ engines support: honeycombing in particular
+appears in none of the source datasets, and coverage of the finish/durability
+defects is thin. For those images we run a second-pass detection with a GPT
+vision model, which identifies the defect and an approximate bounding box.
+Results are returned in the SAME shape as the Roboflow predictions (centre-based
+x, y, width, height in pixels) so the rest of the pipeline (severity grading,
+annotation, reporting) is unchanged.
 
 Every detection produced here is clearly tagged ``source = "GPT-4o vision"`` so
 the report never presents an LLM guess as if it were the trained detector.
@@ -22,34 +23,68 @@ from typing import Any
 
 from PIL import Image
 
-# Defect vocabulary the severity engine understands (plus efflorescence).
+from src.defect_taxonomy import normalise_defect
+
+# Defect vocabulary the severity, cost and BOQ tables are keyed on. Keep this in
+# sync with src.defect_taxonomy.CANONICAL_CLASSES: a class returned here that the
+# taxonomy does not know gets no rate analysis downstream.
 ALLOWED_CLASSES = (
     "crack",
+    "stairstep_crack",
     "spalling",
     "honeycombing",
     "exposed_reinforcement",
     "mold",
     "efflorescence",
+    "water_seepage",
+    "peeling_paint",
+    "rust_staining",
 )
 
 _PROMPT = f"""You are a senior civil / structural inspection engineer acting as a
-construction-defect detector for reinforced-concrete surfaces.
+construction-defect detector for reinforced-concrete and masonry surfaces.
 
-Look at the image and report ONLY clearly visible concrete defects. Use exactly
-these class names: {", ".join(ALLOWED_CLASSES)}.
-Guidance:
-- exposed_reinforcement = visible / corroded steel bars, loss of concrete cover.
-- efflorescence = white salt deposits / white bleeding / leaching stains.
-- mold = dark damp / fungal patches, water staining.
+Look at the image and report ONLY clearly visible defects. Use exactly these
+class names: {", ".join(ALLOWED_CLASSES)}.
+
+Structural defects:
+- crack = linear fracture through concrete.
+- stairstep_crack = crack following masonry bed and head joints in a stepped /
+  staircase pattern, usually diagonal across brick or block work. This indicates
+  differential settlement, so classify it as stairstep_crack rather than crack
+  whenever the stepped joint pattern is visible.
 - spalling = broken-away or delaminated concrete, missing chunks.
-- crack = linear fracture.
 - honeycombing = rough, porous concrete with exposed coarse aggregate and voids
   between the stones because the cement paste did not fill around them (poor
   compaction / segregation). Looks like clustered gravel/stones with gaps, no
   smooth paste surface. Common on formwork faces, footings and around openings.
+- exposed_reinforcement = steel bars actually VISIBLE through lost cover.
+
+Durability and finish defects:
+- efflorescence = white salt / lime deposits, leaching stains, chalky bloom.
+- rust_staining = rust-brown / orange streaks and stains on the surface with NO
+  steel visible. This is leachate from a bar corroding behind intact cover.
+- water_seepage = active damp patch, wet streak, water running or weeping from
+  a joint, crack or slab soffit.
+- mold = dark green/black fungal or algal growth on a damp surface.
+- peeling_paint = paint or render blistering, flaking or peeling off.
+
+Critical distinctions -- getting these wrong changes the repair specified:
+1. rust_staining vs exposed_reinforcement: if you can SEE metal, it is
+   exposed_reinforcement. If you only see a brown stain on otherwise intact
+   concrete, it is rust_staining. Do not return exposed_reinforcement for a
+   stain alone.
+2. stairstep_crack vs crack: stepped pattern following mortar joints in masonry
+   is stairstep_crack. A crack through solid concrete is crack. Return only one
+   of the two for the same fracture, not both.
+3. water_seepage vs mold: the wet patch itself is water_seepage; dark biological
+   growth on it is mold. If both are clearly present as distinct regions, return
+   both. If it is one damp patch, return water_seepage only.
+4. peeling_paint is a finish defect. Do not report the concrete underneath as
+   spalling unless concrete itself has actually broken away.
 
 Mandatory two-pass inspection:
-1. Scan every concrete region, including image edges, behind tools or buckets,
+1. Scan every surface region, including image edges, behind tools or buckets,
     and boundaries between smooth and rough concrete.
 2. Specifically check for honeycombing. A large rough aggregate field directly
     beside smooth concrete is honeycombing unless it is clearly loose ground
@@ -166,7 +201,7 @@ def detect_with_gpt(
     model: str = "gpt-4o",
     api_key: str | None = None,
     client: Any | None = None,
-    max_detections: int = 6,
+    max_detections: int = 8,
 ) -> tuple[list[dict[str, Any]], int, int]:
     """Detect defects with a GPT vision model.
 
@@ -223,7 +258,10 @@ def detect_with_gpt(
 
     preds: list[dict[str, Any]] = []
     for item in parsed.get("detections", [])[:max_detections]:
-        defect = str(item.get("defect_class", "")).strip().lower().replace(" ", "_")
+        # Normalise through the shared taxonomy first, so a model that answers
+        # with a dataset name ("white_bleeding") or a synonym still maps onto a
+        # class the severity and BOQ tables recognise.
+        defect = normalise_defect(item.get("defect_class", ""))
         if defect not in ALLOWED_CLASSES:
             continue
         box = item.get("box", {}) or {}

@@ -25,6 +25,7 @@ from src.roboflow_model import run_model, RoboflowModelError  # noqa: F401
 from src.vision_fallback import detect_with_gpt, classify_structural_element
 from src.severity import estimate_severity
 from src.cost_estimation import estimate_repair_days
+from src.defect_taxonomy import normalise_defect, preferred_label, same_family
 
 ROOT = Path(__file__).resolve().parents[1]
 MANUAL_PATH = ROOT / "data" / "manual_detections.json"
@@ -103,22 +104,7 @@ def _prediction_iou(left: dict[str, Any], right: dict[str, Any]) -> float:
 
 
 def normalise_detection_class(value: Any) -> str:
-    key = str(value or "defect").strip().lower().replace(" ", "_").replace("-", "_")
-    aliases = {
-        "spall": "spalling",
-        "spalled_concrete": "spalling",
-        "honeycomb": "honeycombing",
-        "honey_combing": "honeycombing",
-        "mould": "mold",
-        "dampness": "mold",
-        "damp_patch": "mold",
-        "exposed_rebar": "exposed_reinforcement",
-        "rebar": "exposed_reinforcement",
-        "reinforcement_exposed": "exposed_reinforcement",
-        "white_bleeding": "efflorescence",
-        "leaching": "efflorescence",
-    }
-    return aliases.get(key, key)
+    return normalise_defect(value)
 
 
 def merge_predictions(
@@ -127,23 +113,57 @@ def merge_predictions(
     *,
     iou_threshold: float = 0.5,
 ) -> list[dict[str, Any]]:
-    """Supplement primary detections, dropping only same-class overlaps."""
-    merged = []
+    """Supplement primary detections, dropping overlaps within a defect family.
+
+    Overlap suppression is by *family*, not by exact class name. One wall crack
+    can come back as ``crack`` from the Roboflow model and ``stairstep_crack``
+    from the vision fallback; the same damp patch can come back as both
+    ``water_seepage`` and ``mold``. Keeping both would put two line items and
+    two repair costs against one physical defect.
+
+    When a family overlap is found the more specific diagnosis wins (see
+    :func:`~src.defect_taxonomy.preferred_label`), because it carries the more
+    useful remedy, and the surviving detection keeps the higher confidence of
+    the two.
+    """
+    merged: list[dict[str, Any]] = []
     for prediction in primary:
         normalized = dict(prediction)
         normalized["class"] = normalise_detection_class(prediction.get("class"))
         merged.append(normalized)
+
     for candidate in secondary:
         normalized_candidate = dict(candidate)
         candidate_class = normalise_detection_class(candidate.get("class"))
         normalized_candidate["class"] = candidate_class
-        duplicate = any(
-            normalise_detection_class(existing.get("class")) == candidate_class
-            and _prediction_iou(existing, normalized_candidate) >= iou_threshold
-            for existing in merged
+
+        overlap_index = next(
+            (
+                index
+                for index, existing in enumerate(merged)
+                if same_family(existing.get("class", ""), candidate_class)
+                and _prediction_iou(existing, normalized_candidate) >= iou_threshold
+            ),
+            None,
         )
-        if not duplicate:
+        if overlap_index is None:
             merged.append(normalized_candidate)
+            continue
+
+        existing = merged[overlap_index]
+        existing_class = str(existing.get("class", ""))
+        if existing_class == candidate_class:
+            continue  # exact duplicate: keep the primary detection unchanged
+
+        kept_label = preferred_label(existing_class, candidate_class)
+        existing_conf = float(existing.get("confidence", 0.0))
+        candidate_conf = float(normalized_candidate.get("confidence", 0.0))
+        winner = dict(existing if existing_conf >= candidate_conf else normalized_candidate)
+        winner["class"] = kept_label
+        winner["confidence"] = max(existing_conf, candidate_conf)
+        winner["merged_from"] = sorted({existing_class, candidate_class} - {kept_label})
+        merged[overlap_index] = winner
+
     return merged
 
 

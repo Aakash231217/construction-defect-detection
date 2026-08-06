@@ -39,8 +39,10 @@ area-ratio-based estimate and clearly flags it as approximate.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
+
+from src.defect_taxonomy import normalise_defect
 
 
 class QuantityUnit(str, Enum):
@@ -241,6 +243,75 @@ EXPOSED_REBAR_RATES: dict[str, RateBreakup] = {
     ),
 }
 
+# Stepped masonry crack repair rates per running metre.  Severity is floored at
+# Moderate for this defect (settlement indicator), so "minor" is defensive only.
+STAIRSTEP_CRACK_RATES: dict[str, RateBreakup] = {
+    "minor": RateBreakup(
+        material_rate=200.0,   # repointing mortar + tell-tale
+        labour_rate=350.0,
+        equipment_rate=150.0,
+    ),
+    "moderate": RateBreakup(
+        material_rate=335.0,   # repointing mortar, monitors, consumables
+        labour_rate=508.0,     # raking out and repointing bed joints
+        equipment_rate=218.0,  # grinder + access
+    ),
+    "severe": RateBreakup(
+        material_rate=1200.0,  # helical stitching bars + mortar + epoxy
+        labour_rate=883.0,     # slot cutting, bedding bars, repointing
+        equipment_rate=650.0,  # drilling, grinder, scaffolding
+    ),
+    "critical": RateBreakup(
+        material_rate=1600.0,
+        labour_rate=1100.0,
+        equipment_rate=850.0,
+    ),
+}
+
+# ---------------------------------------------------------------------------
+# Non-structural (durability / finish) defect rates, per square metre
+# ---------------------------------------------------------------------------
+# These are deliberately an order of magnitude below the concrete-repair rates.
+# Quoting a repaint or a stain wash at spalling rates was the single largest
+# source of cost error in the reports, so each finish defect now carries its own
+# table instead of falling through to a structural one.
+
+# Efflorescence / salt leaching (severity capped at Moderate)
+EFFLORESCENCE_RATES: dict[str, RateBreakup] = {
+    "negligible": RateBreakup(60.0, 60.0, 15.0),
+    "minor": RateBreakup(110.0, 90.0, 20.0),     # wash + breathable repellent
+    "moderate": RateBreakup(380.0, 190.0, 75.0),  # + crystalline waterproofing
+    "severe": RateBreakup(380.0, 190.0, 75.0),
+    "critical": RateBreakup(380.0, 190.0, 75.0),
+}
+
+# Active water seepage / damp patches (severity capped at Severe)
+SEEPAGE_RATES: dict[str, RateBreakup] = {
+    "negligible": RateBreakup(250.0, 150.0, 45.0),
+    "minor": RateBreakup(400.0, 200.0, 60.0),     # local seal + coating
+    "moderate": RateBreakup(550.0, 235.0, 75.0),  # crystalline waterproofing
+    "severe": RateBreakup(1700.0, 510.0, 555.0),  # PU injection + full system
+    "critical": RateBreakup(1700.0, 510.0, 555.0),
+}
+
+# Peeling / flaking paint (cosmetic; severity capped at Moderate)
+PAINT_RATES: dict[str, RateBreakup] = {
+    "negligible": RateBreakup(40.0, 20.0, 5.0),
+    "minor": RateBreakup(72.0, 35.0, 10.0),     # scrape, spot prime, touch up
+    "moderate": RateBreakup(200.0, 100.0, 45.0),  # strip back, prime, 2 coats
+    "severe": RateBreakup(200.0, 100.0, 45.0),
+    "critical": RateBreakup(200.0, 100.0, 45.0),
+}
+
+# Rust / corrosion staining (severity capped at Moderate; an indicator defect)
+RUST_STAIN_RATES: dict[str, RateBreakup] = {
+    "negligible": RateBreakup(50.0, 40.0, 10.0),
+    "minor": RateBreakup(85.0, 65.0, 17.0),       # clean, seal, log for review
+    "moderate": RateBreakup(305.0, 260.0, 375.0),  # + cover/half-cell survey
+    "severe": RateBreakup(305.0, 260.0, 375.0),
+    "critical": RateBreakup(305.0, 260.0, 375.0),
+}
+
 
 def _severity_key(level: str) -> str:
     return level.strip().lower()
@@ -260,6 +331,50 @@ def _get_honeycombing_rate(level: str) -> RateBreakup:
 
 def _get_exposed_rebar_rate(level: str) -> RateBreakup:
     return EXPOSED_REBAR_RATES.get(_severity_key(level), EXPOSED_REBAR_RATES["severe"])
+
+
+def _get_stairstep_crack_rate(level: str) -> RateBreakup:
+    return STAIRSTEP_CRACK_RATES.get(_severity_key(level), STAIRSTEP_CRACK_RATES["moderate"])
+
+
+# Area-measured non-structural defects share one lookup shape.
+NON_STRUCTURAL_RATE_TABLES: dict[str, dict[str, RateBreakup]] = {
+    "efflorescence": EFFLORESCENCE_RATES,
+    "water_seepage": SEEPAGE_RATES,
+    "peeling_paint": PAINT_RATES,
+    "rust_staining": RUST_STAIN_RATES,
+}
+
+# Allowance used when the detected class has no rate analysis behind it. Deliberately
+# a clean-and-inspect figure, not a repair rate: the system does not know what the
+# repair is, so it must not price one.
+UNRECOGNISED_DEFECT_RATE = RateBreakup(
+    material_rate=50.0,
+    labour_rate=120.0,
+    equipment_rate=30.0,
+)
+
+NON_STRUCTURAL_NOTES: dict[str, str] = {
+    "efflorescence": (
+        "Rate covers salt removal, breathable repellent and (from Moderate) "
+        "crystalline waterproofing. Stopping the water path is what prevents "
+        "recurrence; treating the face alone is not a durable repair."
+    ),
+    "water_seepage": (
+        "Rate covers leak-path sealing and waterproofing. Drainage correction "
+        "or tanking design, if required, is a separate engineer-designed item."
+    ),
+    "peeling_paint": (
+        "Finish repair only: surface preparation, primer and finish coats. "
+        "No structural content. If the substrate is damp, treat that first as "
+        "a separate item or the coating will fail again."
+    ),
+    "rust_staining": (
+        "Rate covers stain cleaning and (from Moderate) a cover-meter / "
+        "half-cell survey to locate the corroding steel. If the survey finds "
+        "section loss, re-cost the area as exposed reinforcement."
+    ),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -538,80 +653,90 @@ def estimate_repair_cost(
     CostEstimate
         Full cost estimate with quantity, rate analysis, and cost breakup.
     """
-    key = defect_class.strip().lower().replace(" ", "_")
-    if key in {"exposed_rebar", "rebar"}:
-        key = "exposed_reinforcement"
-    if key in {"spall", "spalled_concrete"}:
-        key = "spalling"
-    if key in {"mould", "dampness", "damp_patch", "moisture"}:
-        key = "mold"
-
+    key = normalise_defect(defect_class)
     has_scale = mm_per_pixel is not None and mm_per_pixel > 0
+
+    def area_sq_m() -> float:
+        """Affected surface area in sq m, from scale when available."""
+        if has_scale:
+            return (box_width_px * mm_per_pixel) * (box_height_px * mm_per_pixel) / 1_000_000.0
+        area_ratio = (box_width_px * box_height_px) / (image_width_px * image_height_px)
+        # Without a scale reference, assume the frame captures ~2 m x 1.5 m.
+        return area_ratio * 3.0
+
+    def length_m() -> float:
+        """Defect run length in metres, from scale when available."""
+        if has_scale:
+            return max(box_width_px, box_height_px) * mm_per_pixel / 1000.0
+        area_ratio = (box_width_px * box_height_px) / (image_width_px * image_height_px)
+        # Assume the frame captures ~2 m width.
+        return (area_ratio ** 0.5) * 2.0
 
     # --- Crack ---
     if key == "crack":
-        if has_scale:
-            crack_length_mm = max(box_width_px, box_height_px) * mm_per_pixel
-        else:
-            # Fallback: estimate length from area ratio (very approximate)
-            area_ratio = (box_width_px * box_height_px) / (image_width_px * image_height_px)
-            # Assume average image captures ~2 m width
-            crack_length_mm = (area_ratio ** 0.5) * 2000.0
-        return estimate_crack_cost(crack_length_mm, severity_level)
+        return estimate_crack_cost(length_m() * 1000.0, severity_level)
+
+    # --- Stepped masonry crack (measured along its run, like any crack) ---
+    if key == "stairstep_crack":
+        quantity = estimate_crack_quantity(length_m() * 1000.0, severity_level)
+        return _compute_cost(
+            quantity,
+            _get_stairstep_crack_rate(severity_level),
+            notes=(
+                "Masonry fabric repair only: bed-joint repointing, and helical "
+                "stitching from Severe. Foundation underpinning or drainage "
+                "correction is a separate engineer-designed item and is NOT "
+                "included in this rate."
+            ),
+        )
 
     # --- Spalling ---
     if key == "spalling":
-        if has_scale:
-            area_sq_m = (box_width_px * mm_per_pixel) * (box_height_px * mm_per_pixel) / 1_000_000.0
-        else:
-            area_ratio = (box_width_px * box_height_px) / (image_width_px * image_height_px)
-            # Assume average image captures ~2 m x 1.5 m = 3 sq m
-            area_sq_m = area_ratio * 3.0
-        return estimate_spalling_cost(area_sq_m, severity_level, depth_mm)
+        return estimate_spalling_cost(area_sq_m(), severity_level, depth_mm)
 
     # --- Honeycombing ---
     if key == "honeycombing":
-        if has_scale:
-            area_sq_m = (box_width_px * mm_per_pixel) * (box_height_px * mm_per_pixel) / 1_000_000.0
-        else:
-            area_ratio = (box_width_px * box_height_px) / (image_width_px * image_height_px)
-            area_sq_m = area_ratio * 3.0
-        return estimate_honeycombing_cost(area_sq_m, severity_level, depth_mm)
+        return estimate_honeycombing_cost(area_sq_m(), severity_level, depth_mm)
 
     # --- Mold / dampness ---
     if key == "mold":
-        if has_scale:
-            area_sq_m = (box_width_px * mm_per_pixel) * (box_height_px * mm_per_pixel) / 1_000_000.0
-        else:
-            area_ratio = (box_width_px * box_height_px) / (image_width_px * image_height_px)
-            area_sq_m = area_ratio * 3.0
-        return estimate_honeycombing_cost(area_sq_m, severity_level, depth_mm)
+        return estimate_honeycombing_cost(area_sq_m(), severity_level, depth_mm)
 
     # --- Exposed reinforcement ---
     if key == "exposed_reinforcement":
-        if has_scale:
-            area_sq_m = (box_width_px * mm_per_pixel) * (box_height_px * mm_per_pixel) / 1_000_000.0
-        else:
-            area_ratio = (box_width_px * box_height_px) / (image_width_px * image_height_px)
-            area_sq_m = area_ratio * 3.0
-        return estimate_exposed_rebar_cost(area_sq_m, severity_level, cover_mm)
+        return estimate_exposed_rebar_cost(area_sq_m(), severity_level, cover_mm)
 
-    # --- Unknown defect: generic area-based estimate ---
-    if has_scale:
-        area_sq_m = (box_width_px * mm_per_pixel) * (box_height_px * mm_per_pixel) / 1_000_000.0
-    else:
-        area_ratio = (box_width_px * box_height_px) / (image_width_px * image_height_px)
-        area_sq_m = area_ratio * 3.0
+    # --- Non-structural durability / finish defects ---
+    if key in NON_STRUCTURAL_RATE_TABLES:
+        table = NON_STRUCTURAL_RATE_TABLES[key]
+        area = area_sq_m()
+        quantity = QuantityEstimate(
+            value=area,
+            unit=QuantityUnit.SQUARE_METRE,
+            description=f"Affected area {area:.2f} sq m ({key.replace('_', ' ')})",
+        )
+        rate = table.get(_severity_key(severity_level), table["moderate"])
+        return _compute_cost(quantity, rate, notes=NON_STRUCTURAL_NOTES[key])
+
+    # --- Unrecognised defect ---
+    # Falling back to a concrete-repair rate here would quote structural repair
+    # prices for something the system cannot identify.  Return a make-good and
+    # inspection allowance instead, and say plainly that the type is unknown.
+    area = area_sq_m()
     quantity = QuantityEstimate(
-        value=area_sq_m,
+        value=area,
         unit=QuantityUnit.SQUARE_METRE,
-        description=f"Affected area {area_sq_m:.2f} sq m (generic)",
+        description=f"Affected area {area:.2f} sq m (defect type not recognised)",
     )
-    rate = SPALLING_RATES.get(_severity_key(severity_level), SPALLING_RATES["moderate"])
     return _compute_cost(
         quantity,
-        rate,
-        notes="Generic area-based estimate; confirm defect type and repair method with engineer.",
+        UNRECOGNISED_DEFECT_RATE,
+        notes=(
+            f"'{defect_class}' is not in the supported defect vocabulary, so no "
+            "repair method or rate analysis applies. The figure shown is a "
+            "make-good and inspection allowance only. A site engineer must "
+            "identify the defect and specify the repair before this is costed."
+        ),
     )
 
 

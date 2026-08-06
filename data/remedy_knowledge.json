@@ -2,78 +2,189 @@
   {
     "id": "crack-minor",
     "defect": "crack",
-    "severity": ["Minor"],
+    "severity": [
+      "Minor"
+    ],
     "source": "ACI 224R-01 / IS 456:2000 Cl. 35.3.2",
     "content": "Minor hairline cracks are normally treated as durability or serviceability issues. Clean the crack line, remove dust and loose particles, seal the crack using acrylic, PU or compatible surface sealant, and monitor for movement. Quantity is measured as crack length in running metres. Cost is calculated as crack length multiplied by sealant repair rate."
   },
   {
     "id": "crack-moderate",
     "defect": "crack",
-    "severity": ["Moderate"],
+    "severity": [
+      "Moderate"
+    ],
     "source": "ACI 224R-01 / IS 456:2000 Cl. 35.3.2",
     "content": "Moderate cracks require investigation of moisture ingress and crack activity. Recommended repair is route-and-seal or epoxy injection along the measured crack length. Quantity is the crack length in running metres. Rate analysis should include epoxy resin or sealant, injection packers, drilling, skilled labour and injection equipment."
   },
   {
     "id": "crack-severe-critical",
     "defect": "crack",
-    "severity": ["Severe", "Critical"],
+    "severity": [
+      "Severe",
+      "Critical"
+    ],
     "source": "ACI 224R-01 / ACI 562 / IS 456:2000",
     "content": "Severe or critical cracking requires structural engineering review before repair. Typical remedies include structural epoxy injection, crack stitching, local strengthening, load restriction and temporary support where required. Quantity is based on crack length, but an effective length factor is applied because stitching bars and strengthening extend beyond the visible crack."
   },
   {
     "id": "spalling-minor-moderate",
     "defect": "spalling",
-    "severity": ["Minor", "Moderate"],
+    "severity": [
+      "Minor",
+      "Moderate"
+    ],
     "source": "ICRI 310.1 / Concrete Society TR54",
     "content": "Minor to moderate spalling is repaired by removing loose or delaminated concrete, cleaning the substrate, treating any visible reinforcement, applying bonding agent if required, and reinstating cover using polymer-modified repair mortar. Quantity is normally measured as affected surface area in square metres."
   },
   {
     "id": "spalling-severe-critical",
     "defect": "spalling",
-    "severity": ["Severe", "Critical"],
+    "severity": [
+      "Severe",
+      "Critical"
+    ],
     "source": "ICRI 310.1 / ACI 562 / Concrete Society TR54",
     "content": "Severe spalling or deep delamination may indicate corrosion or section loss. Unsound concrete must be broken out to sound material, reinforcement cleaned or replaced, corrosion protection applied, and the section restored using micro-concrete, shotcrete or engineer-designed strengthening. If depth is known, quantity should be computed as volume: area multiplied by repair depth."
   },
   {
     "id": "honeycombing-minor-moderate",
     "defect": "honeycombing",
-    "severity": ["Minor", "Moderate"],
+    "severity": [
+      "Minor",
+      "Moderate"
+    ],
     "source": "IS 456:2000 Cl. 12 / ACI 309",
     "content": "Honeycombing is caused by poor compaction, segregation or inadequate concrete flow. Minor to moderate surface honeycombing is repaired by removing weak concrete, cleaning voids, filling with non-shrink grout or repair mortar, and finishing the surface. Quantity is generally measured as affected area in square metres."
   },
   {
     "id": "honeycombing-severe-critical",
     "defect": "honeycombing",
-    "severity": ["Severe", "Critical"],
+    "severity": [
+      "Severe",
+      "Critical"
+    ],
     "source": "IS 456:2000 / ACI 309 / ACI 562",
     "content": "Deep honeycombing can reduce cover, strength and durability. Severe cases require engineer review, removal of defective concrete, pressure grouting or rebuilding with micro-concrete or shotcrete. When depth is measured, quantity should be volume: affected area multiplied by void depth."
   },
   {
     "id": "exposed-rebar-severe-critical",
     "defect": "exposed_reinforcement",
-    "severity": ["Severe", "Critical"],
+    "severity": [
+      "Severe",
+      "Critical"
+    ],
     "source": "ICRI 310.1 / ACI 562",
     "content": "Exposed reinforcement means loss of concrete cover and active corrosion risk. Repair requires breaking out loose concrete, exposing sufficient bar length, cleaning or replacing corroded steel, applying corrosion inhibitor or passivating coating, and restoring cover with repair mortar or micro-concrete. Quantity is measured as cover restoration area in square metres, with an effective area factor for critical cases."
   },
   {
     "id": "mold-dampness-treatment",
     "defect": "mold",
-    "severity": ["Minor", "Moderate", "Severe", "Critical"],
+    "severity": [
+      "Minor",
+      "Moderate",
+      "Severe",
+      "Critical"
+    ],
     "source": "Building maintenance practice / CPWD-style waterproofing and plaster repair norms",
     "content": "Mold or dampness indicates moisture ingress, leakage, condensation or inadequate ventilation. Repair should first identify and stop the water source, then remove contaminated loose plaster or paint, clean with anti-fungal biocide wash, dry the surface, apply waterproof coating where required, and replaster or repaint the affected area. Quantity is measured as affected surface area in square metres. Rate analysis should include anti-fungal chemical, waterproof coating, plaster repair material, labour for scraping/cleaning/application and hand tools."
   },
   {
     "id": "cost-quantity-rate",
     "defect": "general",
-    "severity": ["Minor", "Moderate", "Severe", "Critical"],
+    "severity": [
+      "Minor",
+      "Moderate",
+      "Severe",
+      "Critical"
+    ],
     "source": "Quantity surveying practice / CPWD-style rate analysis",
     "content": "Repair cost must be calculated from quantity and rate analysis. Quantity may be running metre, square metre, cubic metre, kilogram or number depending on repair method. Composite rate is material rate plus labour rate plus equipment rate. Total cost equals quantity multiplied by composite rate, with separate material, labour and equipment cost breakup."
   },
   {
     "id": "site-validation",
     "defect": "general",
-    "severity": ["Minor", "Moderate", "Severe", "Critical"],
+    "severity": [
+      "Minor",
+      "Moderate",
+      "Severe",
+      "Critical"
+    ],
     "source": "Engineering inspection practice",
     "content": "Image-based measurements are preliminary. Final repair quantities and remedies must be confirmed by site inspection, crack gauge or scale reference, depth measurement, hammer sounding, cover meter readings, chloride/carbonation checks where relevant, access constraints and approval by a structural engineer."
+  },
+  {
+    "id": "stairstep-crack-assessment",
+    "defect": "stairstep_crack",
+    "severity": [
+      "Minor",
+      "Moderate"
+    ],
+    "source": "BRE Digest 251 / IS 1905 masonry practice",
+    "content": "A stepped crack following the mortar bed and head joints of brick or block work is a movement crack, not a material failure. It indicates differential settlement between parts of the foundation, and the wide end of the crack points towards the settling side. Assessment order is fixed: identify the cause first, confirm whether movement is ongoing, and only then repair the fabric. Fit tell-tale gauges across the crack and monitor through at least one full seasonal cycle before repointing, because repointing a live crack simply cracks again along the new mortar. Common causes are leaking drains softening the bearing soil, tree root moisture demand in shrinkable clay, and inadequate or undermined footings. Quantity is measured along the crack run in running metres. Cost is crack run length multiplied by the repointing or stitching rate."
+  },
+  {
+    "id": "stairstep-crack-severe",
+    "defect": "stairstep_crack",
+    "severity": [
+      "Severe",
+      "Critical"
+    ],
+    "source": "BRE Digest 251 / helical stitching manufacturer specification",
+    "content": "Wide or progressing stepped cracking in masonry requires structural investigation before repair. Where movement has been confirmed as stable, the fabric repair is helical bed-joint stitching: slots are cut into the bed joints at roughly 450 mm vertical centres crossing the crack, helical stainless bars are bedded in grout, and the joints are repointed. This restores tensile continuity across the crack. Critically, stitching treats the symptom only. If the cause is ongoing settlement, the foundation itself needs underpinning or the drainage defect needs correcting, and that is a separate engineer-designed item costed independently of the per-metre stitching rate. Never present a stitching rate as the total repair cost for a building with active settlement."
+  },
+  {
+    "id": "efflorescence-treatment",
+    "defect": "efflorescence",
+    "severity": [
+      "Minor",
+      "Moderate"
+    ],
+    "source": "IS 456:2000 Cl. 8 (durability) / BS 8102 intent",
+    "content": "Efflorescence is the white crystalline salt deposit left when water moves through concrete or masonry, dissolves soluble salts, and evaporates at the surface. The deposit itself carries no load and is not a structural defect, so it should never be graded as critical on the basis of how much surface it covers. Its significance is diagnostic: it proves there is an active water path through the element, and that same water drives reinforcement corrosion over time. Treatment is therefore aimed at the water, not the salt. Remove deposits by dry brushing and a neutralising wash, identify and seal the water entry point, apply crystalline waterproofing where the path runs through the element, and finish with a breathable water repellent. A non-breathable coating traps moisture and causes the surface to blister instead. Quantity is the treated surface area in square metres."
+  },
+  {
+    "id": "water-seepage-treatment",
+    "defect": "water_seepage",
+    "severity": [
+      "Minor",
+      "Moderate",
+      "Severe",
+      "Critical"
+    ],
+    "source": "BS 8102 (water-resisting construction) / CPWD waterproofing specification",
+    "content": "Active seepage is water entering through a crack, construction joint or porous zone and appearing as a damp patch, streak or drip on the exposed face. Sustained moisture is the main driver of reinforcement corrosion and supports mould growth, so seepage is treated as a durability defect of real consequence even though the concrete section is intact. Repair sequence: trace the leak to its source, hack back damp plaster to sound substrate, seal the entry point, apply cementitious crystalline waterproofing in two coats, re-plaster and apply a waterproof top coat. Where the leak is under pressure or through a live joint, polyurethane injection grouting is used: ports are drilled along the leak path and resin is injected until flow stops. Surface coating applied over an active leak will not hold and will debond. Quantity is the treated area in square metres."
+  },
+  {
+    "id": "rust-staining-indicator",
+    "defect": "rust_staining",
+    "severity": [
+      "Minor",
+      "Moderate"
+    ],
+    "source": "ICRI 310.1 / IS 456:2000 Cl. 8 / RILEM half-cell practice",
+    "content": "Rust-brown staining on an otherwise intact concrete face is corrosion leachate: reinforcement is already corroding behind cover that has not yet spalled. It is an early-warning indicator rather than a defect with its own structural consequence, and must be distinguished from exposed reinforcement, where steel is actually visible and section loss has begun. The correct response is investigation, not cosmetic covering. Use a cover meter to locate the bars and measure actual cover, then half-cell potential mapping to identify where corrosion is active. Apply a migrating corrosion inhibitor and make good the surface. Painting over the stain without survey hides an advancing problem that will present later as spalling at far higher cost. If the survey finds section loss or delamination, re-grade the area as exposed reinforcement and use that repair specification instead."
+  },
+  {
+    "id": "peeling-paint-finish",
+    "defect": "peeling_paint",
+    "severity": [
+      "Minor",
+      "Moderate"
+    ],
+    "source": "CPWD painting schedule / coating manufacturer application guidance",
+    "content": "Peeling, flaking or blistering paint is a finish defect with no structural significance, and it must not be costed at concrete-repair rates. Its value in an inspection is as a symptom: coatings most often fail because moisture is migrating out through the substrate, or because the surface was painted over an alkaline or dusty base without a suitable primer. Repair is scrape back to a sound substrate, anti-fungal wash where growth is present, allow the substrate to dry, apply putty and sand, then an alkali-resistant primer and two finish coats. Repainting a damp substrate simply repeats the failure, so where dampness is the cause, the moisture source is treated first as a separate item. Quantity is the repainted area in square metres and the rate is an order of magnitude below any concrete repair rate."
+  },
+  {
+    "id": "defect-classification-boundaries",
+    "defect": "general",
+    "severity": [
+      "Minor",
+      "Moderate",
+      "Severe",
+      "Critical"
+    ],
+    "source": "Inspection practice / ICRI 310.1",
+    "content": "Several defect types are visually adjacent and are routinely confused, which matters because each carries a different repair and a very different cost. Rust staining means steel is corroding behind intact cover; exposed reinforcement means steel is visible and section has been lost. A stepped crack through masonry joints indicates foundation settlement; a crack through solid concrete does not. Efflorescence is the dried salt residue of a past or present water path; water seepage is the active wet patch itself; mould is the biological growth that follows sustained damp. Where two labels describe one physical defect, report the more specific diagnosis once rather than both, because two entries against one defect double-counts the repair quantity and inflates the estimate. Where two genuinely distinct defects overlap in the same photograph, report both with their own boundaries and cost each separately."
   }
 ]
